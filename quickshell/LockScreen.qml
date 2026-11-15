@@ -22,11 +22,13 @@ Scope {
 
     // `locked` is what we asked for; `secure` is the compositor confirming the screen is covered.
     // If a lock was refused (e.g. hyprlock already held the screen), `locked` stays true while
-    // nothing shows: drop it and ask again.
+    // nothing shows: after 3 s unconfirmed, drop it and ask again.
+    property real askedAt: 0
     function lock() {
-        if (session.locked && session.secure) return;
+        if (session.locked && (session.secure || Date.now() - askedAt < 3000)) return;
         if (session.locked) session.locked = false;
         reset();
+        askedAt = Date.now();
         session.locked = true;
     }
     function reset() { phase = "idle"; message = ""; pending = "" }
