@@ -5,8 +5,7 @@ widgets, dropdown popups, a notification daemon, an Alt+Tab switcher, a wallpape
 AI side panel and an Evangelion-style lock screen. Colours follow your wallpaper through
 [matugen](https://github.com/InioX/matugen).
 
-These are the `dotfiles/` of my NixOS config, published as a clean copy. They work on any
-distro that has the programs below; nothing here needs Nix.
+Built on NixOS, but nothing here needs Nix: it works on any distro that has the programs below.
 
 ## What's in it
 
@@ -102,4 +101,6 @@ Press **Super+/** for the full list. The essentials:
 - `quickshell/Settings.qml` documents every setting; `Theme.qml` has one `typeface` setting with
   six font pairings.
 - The lock screen uses the PAM service `hyprlock` (`/etc/pam.d/hyprlock`, installed with hyprlock).
-- Built and tested on NixOS unstable with an AMD + NVIDIA laptop at 1920×1080.
+- `hypr/hyprland.lua` puts some apps on fixed workspaces (browser 1, terminal 2, code 3, chat 4…):
+  change those rules to suit your apps.
+- Tested on NixOS unstable, on an AMD + NVIDIA laptop at 1920×1080.
