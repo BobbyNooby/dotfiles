@@ -1,0 +1,42 @@
+# Two-line prompt, as on the Mac:
+#   line 1: folder + git branch/status ........ how long the last command took (if ≥ 500 ms) + time
+#   line 2: ❯ (green after success, red after an error)
+add_newline = true
+format = """
+$directory$git_branch$git_status$nix_shell$fill$cmd_duration$time
+$character"""
+
+[fill]
+symbol = " "
+
+[directory]
+style = "bold cyan"
+truncation_length = 3
+truncate_to_repo = true
+
+[git_branch]
+format = "on [$symbol$branch]($style) "
+style = "bold purple"
+
+[git_status]
+style = "bold red"
+
+# shows when you're inside a project's dev shell (direnv / nix develop)
+[nix_shell]
+format = "via [$symbol$name]($style) "
+style = "bold blue"
+
+[cmd_duration]
+min_time = 500
+format = "took [$duration]($style) "
+style = "yellow"
+
+[time]
+disabled = false
+format = "[$time]($style)"
+time_format = "%H:%M"
+style = "dimmed white"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"

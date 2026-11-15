@@ -1,0 +1,17 @@
+{
+  "repo": "nixos-config",
+  "cities": [
+    { "id": "home", "name": "London", "short": "LONDON", "zone": "UK", "tz": "Europe/London", "lat": 51.5072, "lon": -0.1276 },
+    { "id": "away", "name": "Tokyo", "short": "TOKYO", "tz": "Asia/Tokyo", "lat": 35.6764, "lon": 139.65 }
+  ],
+  "folders": {
+    "wallpapers": "Pictures/Wallpapers",
+    "pictures": "Pictures",
+    "screenshots": "Pictures/Screenshots",
+    "screenshotSave": "Pictures/Screenshots"
+  },
+  "gpu": "",
+  "vpnPrefix": "surfshark",
+  "lockGlow": "strong",
+  "widgets": { "weather": true, "system": true, "connections": true, "shortcuts": true, "player": true, "lyrics": true }
+}

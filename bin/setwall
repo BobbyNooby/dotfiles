@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# setwall [image]: set the wallpaper and recolour everything from it (Quickshell, Hyprland,
+# WezTerm, rofi, GTK) with matugen. No image: pick one from your wallpapers folder in rofi.
+# The shell's wallpaper switcher (Super+W) calls this too. Put it on your PATH.
+# (Standalone copy for the public dotfiles; on NixOS it's built in home/hyprland.nix.)
+set -eu
+wall=$(jq -r '.folders.wallpapers // "Pictures/Wallpapers"' "$HOME/.config/desktop/settings.json" 2>/dev/null || echo Pictures/Wallpapers)
+case "$wall" in /*) ;; *) wall="$HOME/${wall#\~/}" ;; esac
+dir="${WALLPAPER_DIR:-$wall}"
+img="${1:-}"
+
+if [ -z "$img" ]; then
+  if [ ! -d "$dir" ]; then
+    notify-send "setwall" "Put some images in $dir first"
+    exit 1
+  fi
+  choice=$(find "$dir" -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) -printf '%P\n' \
+    | sort | rofi -dmenu -i -p wallpaper) || exit 0
+  img="$dir/$choice"
+fi
+
+img=$(realpath "$img")
+if [ ! -f "$img" ]; then
+  echo "setwall: not a file: $img" >&2
+  exit 1
+fi
+
+# 1. colours for Quickshell, Hyprland, WezTerm, rofi and GTK (matugen/)
+matugen image "$img" --mode dark
+# 2. the wallpaper itself: Quickshell watches this file and swaps the image
+state="${XDG_STATE_HOME:-$HOME/.local/state}/wallpaper"
+mkdir -p "$state"
+printf '%s\n' "$img" > "$state/path"
+# 3. Hyprland picks up the new border colours
+hyprctl reload > /dev/null 2>&1 || true

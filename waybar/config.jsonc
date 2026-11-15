@@ -1,0 +1,114 @@
+// Waybar layout. Styling is in style.css (reloads on save).
+// Restart after changing this file: pkill waybar && waybar &
+// Module reference: https://github.com/Alexays/Waybar/wiki
+{
+  "layer": "top",
+  "position": "top",
+  "height": 34,
+  "margin-top": 6,
+  "margin-left": 12,
+  "margin-right": 12,
+  "spacing": 6,
+  "reload_style_on_change": true,
+
+  "modules-left": ["custom/launcher", "hyprland/workspaces", "hyprland/window"],
+  "modules-center": ["clock"],
+  "modules-right": ["mpris", "custom/weather", "tray", "pulseaudio", "network", "cpu", "memory", "battery", "custom/power"],
+
+  // Now playing: works with any player that supports MPRIS (Spotify, mpv,
+  // YouTube in Edge...). Hidden when nothing is playing.
+  "mpris": {
+    "format": "{player_icon} {artist} – {title}",
+    "format-paused": "{status_icon} {artist} – {title}",
+    "player-icons": { "default": "󰎆", "spotify": "" },
+    "status-icons": { "paused": "󰏤" },
+    "max-length": 45,
+    "on-click": "playerctl play-pause",
+    "on-click-right": "playerctl next",
+    "on-click-middle": "playerctl previous"
+  },
+
+  // Example custom module: runs a command and shows whatever it prints.
+  // Swap the command for any script of your own.
+  "custom/weather": {
+    "exec": "curl -sf 'https://wttr.in/?format=%c+%t' || true",
+    "interval": 1800,
+    "tooltip": false
+  },
+
+  "custom/launcher": {
+    "format": "",
+    "on-click": "rofi -show drun",
+    "tooltip": false
+  },
+
+  "hyprland/workspaces": {
+    "format": "{icon}",
+    "format-icons": {
+      "active": "",
+      "default": "",
+      "empty": ""
+    },
+    "persistent-workspaces": { "*": 5 },
+    "on-scroll-up": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e+1\" })'",
+    "on-scroll-down": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"e-1\" })'"
+  },
+
+  "hyprland/window": {
+    "max-length": 50,
+    "separate-outputs": true
+  },
+
+  "clock": {
+    "format": "{:%a %d %b  %H:%M}",
+    "tooltip-format": "<tt>{calendar}</tt>"
+  },
+
+  "tray": {
+    "icon-size": 16,
+    "spacing": 8
+  },
+
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": " muted",
+    "format-icons": { "default": ["", "", ""] },
+    "on-click": "pavucontrol",
+    "on-click-right": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle",
+    "scroll-step": 5
+  },
+
+  "network": {
+    "format-wifi": " {signalStrength}%",
+    "format-ethernet": "󰈀 {ipaddr}",
+    "format-disconnected": "󰖪 offline",
+    "tooltip-format": "{essid} {ipaddr}",
+    "on-click": "nm-connection-editor"
+  },
+
+  "cpu": {
+    "format": " {usage}%",
+    "interval": 5,
+    "on-click": "wezterm start -- btop"
+  },
+
+  "memory": {
+    "format": " {percentage}%",
+    "interval": 5
+  },
+
+  // Only appears on machines with a battery (the laptop)
+  "battery": {
+    "states": { "warning": 25, "critical": 10 },
+    "format": "{icon} {capacity}%",
+    "format-charging": "󰂄 {capacity}%",
+    "format-icons": ["󰁺", "󰁼", "󰁾", "󰂀", "󰁹"]
+  },
+
+  "custom/power": {
+    "format": "⏻",
+    "tooltip": false,
+    "on-click": "hyprlock",
+    "on-click-right": "systemctl suspend"
+  }
+}

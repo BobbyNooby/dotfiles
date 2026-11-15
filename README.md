@@ -1,0 +1,105 @@
+# dotfiles
+
+A Hyprland desktop built with [Quickshell](https://quickshell.org): a floating bar, desktop
+widgets, dropdown popups, a notification daemon, an Alt+Tab switcher, a wallpaper switcher, an
+AI side panel and an Evangelion-style lock screen. Colours follow your wallpaper through
+[matugen](https://github.com/InioX/matugen).
+
+These are the `dotfiles/` of my NixOS config, published as a clean copy. They work on any
+distro that has the programs below; nothing here needs Nix.
+
+## What's in it
+
+| Folder | What |
+|---|---|
+| `quickshell/` | the whole shell; `shell.qml` lists every file and what it does |
+| `hypr/` | Hyprland (**Lua config, Hyprland 0.57+**), hypridle, hyprlock |
+| `matugen/` | templates that recolour the shell, Hyprland, WezTerm, rofi and GTK from the wallpaper |
+| `rofi/` | a "Spotlight"-style launcher with mode tabs |
+| `wezterm/`, `starship/` | terminal and prompt |
+| `aliases/` | zsh aliases and functions (loaded from `~/aliases`) |
+| `waybar/`, `mako/` | an old fallback bar and notifications (not used by default) |
+| `bin/setwall` | sets the wallpaper and recolours everything |
+
+### The shell
+- **Bar:** workspaces with app icons, now playing, RAM, keyboard layout, volume, Wi-Fi,
+  Bluetooth, battery, notifications, clock, and your picture (account popup) on the left.
+- **Desktop widgets:**
+  - one or two cities' clocks with a 48-hour forecast (Open-Meteo, saved for offline);
+  - system (CPU, memory, NVIDIA asleep/awake, battery, power profile);
+  - Tailscale and VPN switches;
+  - a shortcuts card;
+  - a draggable music controller;
+  - synced lyrics that roll like a drum (LRCLIB, saved for offline).
+- **Popups:**
+  - player (cava visualiser, wavy seek bar, EasyEffects presets);
+  - Wi-Fi, Bluetooth, volume, battery;
+  - notifications with Do not disturb;
+  - Quick settings.
+- **Overlays:**
+  - wallpaper switcher (Super+W): folders as tabs, Now vs New with the colours each would give, a tilting carousel;
+  - picture picker;
+  - cheat sheet (Super+/);
+  - Alt+Tab window switcher.
+- **Side panel (Super+A):** chats with [Hermes](https://github.com/NousResearch/hermes-agent) and
+  Claude Code, with `/sessions` and `/new`, streaming, and Undo for file edits.
+- **Lock screen:** an Evangelion-inspired "signal board", unlocked through PAM. There's a test
+  key in `hypr/hyprland.lua`; hyprlock is still the default lock.
+- **Wallpaper transition:** the new picture's outlines are drawn in, then its colours fill in
+  (`quickshell/shaders/sketch.frag`).
+
+## Install
+
+1. **Programs:**
+   - **core:** Hyprland 0.57+, Quickshell 0.3.2, matugen, rofi (+ rofi-calc, rofi-emoji, rofi-nerdy);
+   - **tools:** WezTerm, starship, hypridle, hyprlock, jq, curl, NetworkManager (`nmcli`), PipeWire, playerctl, brightnessctl, grim, slurp, wl-clipboard, cliphist, libnotify (`notify-send`), cava;
+   - **icons:** Papirus.
+
+   Optional:
+   - Tailscale; EasyEffects;
+   - blueman and pavucontrol;
+   - `hermes` and `claude` for the side panel;
+   - `qt6.qtshadertools`, only to edit the shader.
+2. **Fonts:**
+   - Inter, Outfit, FiraCode Nerd Font;
+   - for the lock screen: TeX Gyre Heros Cn (gyre-fonts), Shippori Mincho B1, Share Tech Mono.
+3. **Copy the folders into `~/.config/`** (or symlink them), `aliases/` to `~/aliases`, and
+   `bin/setwall` somewhere on your `PATH`.
+4. **Settings:** copy `quickshell/settings.example.json` to `~/.config/desktop/settings.json` and
+   change it. It sets:
+   - your cities (one or two), picture folders, and where screenshots go;
+   - your GPU's PCI address (for the asleep/awake row; `""` hides it);
+   - the VPN connection prefix, the lock screen glow, and which widgets show.
+
+   Without the file you get sensible defaults.
+5. **Colours:** run `setwall /path/to/a/picture` once. It makes the colour files (they aren't in
+   the repo) and sets the wallpaper.
+6. **Start:** log into Hyprland; `hypr/hyprland.lua` starts Quickshell (`qs -n -d`).
+   - Restart the shell: Super+Shift+B.
+   - Logs: `qs log`.
+
+## Keys
+
+Press **Super+/** for the full list. The essentials:
+
+| Keys | |
+|---|---|
+| Super+Space | launcher |
+| Super+Return | terminal |
+| Super+Q / F / V | close / fullscreen / float |
+| Super+1…0, Super+Shift+1…0 | go to workspace / move window there |
+| Alt+Tab | window switcher (hold Alt) |
+| Super+M | minimize (Alt+Tab brings it back) |
+| Super+W | wallpaper switcher |
+| Super+A | Hermes / Claude side panel |
+| Super+, | Quick settings |
+| Super+N | notifications |
+| Print / Shift+Print | screenshot region / screen |
+| Middle-click a tray icon | quit that app |
+
+## Notes
+
+- `quickshell/Settings.qml` documents every setting; `Theme.qml` has one `typeface` setting with
+  six font pairings.
+- The lock screen uses the PAM service `hyprlock` (`/etc/pam.d/hyprlock`, installed with hyprlock).
+- Built and tested on NixOS unstable with an AMD + NVIDIA laptop at 1920×1080.

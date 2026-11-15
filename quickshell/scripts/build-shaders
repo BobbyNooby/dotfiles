@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Compile the shell's shaders (dotfiles/quickshell/shaders/*.frag) into the .qsb files Qt
+# loads. Run after editing a shader; the .qsb files are kept in git so nothing needs building.
+set -eu
+cd "$(dirname "$0")/../shaders"
+for f in *.frag; do
+    nix shell nixpkgs#qt6.qtshadertools -c qsb --glsl "100 es,120,150" --hlsl 50 --msl 12 -o "$f.qsb" "$f"
+    echo "built $f.qsb"
+done

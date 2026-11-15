@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Wi-Fi picker in rofi (the bar's Wi-Fi button, and the › on the Control Center's Wi-Fi tile).
+# Saved networks connect straight away; a new secured one asks for its password in rofi.
+set -u
+notify() { notify-send -a "Wi-Fi" "Wi-Fi" "$1"; }
+
+if [ "$(nmcli radio wifi)" = "disabled" ]; then toggle="Turn Wi-Fi on"; else toggle="Turn Wi-Fi off"; fi
+
+# One row per network name, strongest first. nmcli -t escapes ":" inside names as "\:".
+ssids=() rows=() secured=()
+while IFS=$'\t' read -r ssid row sec; do
+    ssids+=("$ssid"); rows+=("$row"); secured+=("$sec")
+done < <(nmcli -t -f IN-USE,SIGNAL,SECURITY,SSID device wifi list 2>/dev/null \
+    | sed 's/\\:/\x1f/g' \
+    | sort -t: -k2,2nr \
+    | awk -F: '{
+        ssid = $4; for (i = 5; i <= NF; i++) ssid = ssid ":" $i
+        gsub("\x1f", ":", ssid)
+        if (ssid == "" || seen[ssid]++) next
+        open = ($3 == "" || $3 == "--")
+        printf "%s\t%s %3d%%  %s%s\t%s\n", ssid, ($1 == "*" ? "●" : " "), $2, ssid, (open ? "" : "  🔒"), (open ? 0 : 1)
+    }')
+
+choice=$({ printf '%s\n' "$toggle" "Network settings…"; printf '%s\n' "${rows[@]}"; } \
+    | rofi -dmenu -i -p "Wi-Fi" -format i) || exit 0
+[ -n "$choice" ] || exit 0
+
+case "$choice" in
+0)
+    if [ "$toggle" = "Turn Wi-Fi on" ]; then nmcli radio wifi on; else nmcli radio wifi off; fi ;;
+1)
+    nm-connection-editor & ;;
+*)
+    n=$((choice - 2))
+    ssid=${ssids[$n]}
+    if nmcli -t -f NAME connection show | grep -Fxq -- "$ssid"; then
+        out=$(nmcli connection up id "$ssid" 2>&1)
+    elif [ "${secured[$n]}" = 1 ]; then
+        pw=$(rofi -dmenu -password -p "Password for $ssid" < /dev/null) || exit 0
+        out=$(nmcli device wifi connect "$ssid" password "$pw" 2>&1)
+    else
+        out=$(nmcli device wifi connect "$ssid" 2>&1)
+    fi
+    if [ $? -eq 0 ]; then notify "Connected to $ssid"; else notify "Couldn't connect to $ssid: ${out##*Error: }"; fi ;;
+esac

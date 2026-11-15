@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Synced lyrics for one song from LRCLIB (lrclib.net, free, no key), for the desktop lyrics.
+#   lyrics <title> <artist> <album> <seconds>   → prints the LRC text ("[01:23.45] line" ...)
+# Saved in ~/.cache/quickshell/lyrics/, so songs you've played before work offline. "No synced
+# lyrics" is remembered for a day so it doesn't ask again every play; offline is never saved.
+set -u
+title=$1 artist=$2 album=$3 secs=$4
+dir="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell/lyrics"
+mkdir -p "$dir"
+key=$(printf '%s\n%s' "$title" "$artist" | sha1sum | cut -c1-16)
+file="$dir/$key.lrc"
+none="$dir/$key.none"
+
+[ -s "$file" ] && { cat "$file"; exit 0; }
+[ -e "$none" ] && [ -n "$(find "$none" -mmin -1440)" ] && exit 0
+
+get() { curl -sf --max-time 15 -A quickshell-desktop --get "$@"; }
+synced() { jq -r 'if type == "array" then (map(select(.syncedLyrics)) | .[0].syncedLyrics // "") else (.syncedLyrics // "") end'; }
+
+args=(--data-urlencode "track_name=$title" --data-urlencode "artist_name=$artist")
+[ -n "$album" ] && args+=(--data-urlencode "album_name=$album")
+[ "$secs" -gt 0 ] 2>/dev/null && args+=(--data-urlencode "duration=$secs")
+
+out=$(get https://lrclib.net/api/get "${args[@]}"); rc=$?
+lrc=$(printf '%s' "$out" | synced 2>/dev/null)
+if [ -z "$lrc" ]; then # no exact match: search by title and artist instead
+    out=$(get https://lrclib.net/api/search --data-urlencode "track_name=$title" --data-urlencode "artist_name=$artist"); rc2=$?
+    lrc=$(printf '%s' "$out" | synced 2>/dev/null)
+    # both requests failed outright = offline: don't remember anything
+    [ -z "$lrc" ] && [ $rc -ne 0 ] && [ $rc2 -ne 0 ] && [ $rc -ne 22 ] && exit 1
+fi
+if [ -n "$lrc" ]; then printf '%s\n' "$lrc" > "$file"; printf '%s\n' "$lrc"; else touch "$none"; fi

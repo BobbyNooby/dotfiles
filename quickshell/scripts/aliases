@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Lists every alias and function in ~/aliases/*.zsh for the Shortcuts widget, one per line:
+#   name<TAB>what it does
+# "What it does" is the first line of the comment above it (minus a leading "name:"), or the
+# command itself for an alias without a comment. Add a comment above a new alias to describe it.
+for f in "$HOME"/aliases/*.zsh; do
+    awk '
+        /^[[:space:]]*#/ { line = $0; sub(/^[[:space:]]*#[[:space:]]?/, "", line)
+                           if (comment == "" && line !~ /^[[:space:]]*$/) comment = line; next }
+        /^[[:space:]]*alias [A-Za-z0-9_.-]+=/ {
+            match($0, /alias [A-Za-z0-9_.-]+=/); name = substr($0, RSTART + 6, RLENGTH - 7)
+            cmd = substr($0, RSTART + RLENGTH); gsub(/^["\x27]|["\x27]$/, "", cmd)
+            desc = comment
+            if (desc !~ ("^" name ":")) desc = ""
+            if (desc == "" && cmd ~ /^[A-Za-z0-9_-]+$/) desc = "same as " cmd
+            if (desc == "") desc = cmd
+            sub("^" name ":[[:space:]]*", "", desc)
+            print name "\t" desc; comment = ""; next }
+        /^[[:space:]]*[A-Za-z0-9_-]+\(\)/ {
+            name = $1; sub(/\(\).*/, "", name)
+            desc = comment; sub("^" name ":[[:space:]]*", "", desc)
+            print name "\t" (desc == "" ? "function" : desc); comment = ""; next }
+        /^[[:space:]]*$/ { comment = ""; next }
+        { if ($0 !~ /^[[:space:]]/) comment = "" }
+    ' "$f"
+done

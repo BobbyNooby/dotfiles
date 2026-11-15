@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Close the app behind a tray icon (middle-click on it in the bar).
+#   tray-quit <tray item id>
+# Finds the tray item with that id on D-Bus, asks D-Bus which process owns it, and sends that
+# process SIGTERM: a normal "please quit", like choosing Quit in its menu. Apps that only
+# hide on close (Spotifast, Discord) really exit this way.
+set -u
+id=$1
+items=$(busctl --user --json=short get-property org.kde.StatusNotifierWatcher /StatusNotifierWatcher \
+    org.kde.StatusNotifierWatcher RegisteredStatusNotifierItems | jq -r '.data[]')
+for it in $items; do
+    case "$it" in */*) svc=${it%%/*}; path=/${it#*/} ;; *) svc=$it; path=/StatusNotifierItem ;; esac
+    got=$(busctl --user --json=short get-property "$svc" "$path" org.kde.StatusNotifierItem Id 2>/dev/null | jq -r .data)
+    [ "$got" = "$id" ] || continue
+    pid=$(busctl --user --json=short call org.freedesktop.DBus /org/freedesktop/DBus \
+        org.freedesktop.DBus GetConnectionUnixProcessID s "$svc" | jq -r '.data[0]')
+    [ -n "$pid" ] && kill -TERM "$pid" && exit 0
+done
+exit 1

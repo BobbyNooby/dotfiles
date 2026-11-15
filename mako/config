@@ -1,0 +1,18 @@
+# Notifications. Apply changes with: makoctl reload
+
+font=FiraCode Nerd Font Mono 11
+background-color=#1e1e2eee
+text-color=#cdd6f4
+border-color=#89b4fa
+progress-color=over #313244
+border-size=2
+border-radius=10
+padding=12
+margin=10
+width=360
+default-timeout=5000
+max-visible=5
+
+[urgency=high]
+border-color=#fab387
+default-timeout=0

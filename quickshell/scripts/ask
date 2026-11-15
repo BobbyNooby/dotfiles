@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# The side panel's link to the agents (Super+A). Runs in your config repo so they see this
+# machine's notes (CLAUDE.md / AGENTS.md). Every chat starts new; /sessions picks an old one.
+#
+#   ask hermes <quick|edit> <session-id|new> <message>
+#       Prints the answer. "new" starts a session, titles it with your first message, and
+#       prints "@@SESSION <id>" last so the panel can carry it on.
+#   ask claude <quick|edit> <new|continue> <session-uuid> <message>
+#       Streams Claude Code's JSON events (one per line) for the panel to draw as they come.
+#       quick: read-only tools, web search/fetch and MCP servers, no edits or shell.
+#       edit:  may also edit files (and search), still no shell.
+#   ask sessions <hermes|claude>
+#       Recent sessions in this folder, newest first: "<id>\t<title>\t<when>" per line.
+#   ask undo <git-ref> <file>...
+#       Puts those files back as they were at <git-ref> (taken just before an edit-mode
+#       message); files that didn't exist then are removed.
+set -u
+# the repo, from ~/.config/desktop/settings.json (settings.nix): relative paths are under $HOME
+repo=$(jq -r '.repo // "nixos-config"' "$HOME/.config/desktop/settings.json" 2>/dev/null || echo nixos-config)
+case "$repo" in /*) ;; *) repo="$HOME/${repo#\~/}" ;; esac
+cd "$repo" || exit 1
+clean() { grep -v '^⚠'; } # Hermes's own status lines (e.g. its install check)
+
+case "$1" in
+hermes)
+    mode=$2 sid=$3 msg=$4
+    ask=$msg
+    [ "$mode" = quick ] && ask="(Answer only: don't change any files or settings.) $msg"
+    if [ "$sid" != new ]; then
+        hermes --resume "$sid" -z "$ask" </dev/null 2>/dev/null | clean
+        exit 0
+    fi
+    hermes -z "$ask" </dev/null 2>&1 | clean
+    new=$(hermes sessions list --limit 1 2>/dev/null | grep -o 'local-[0-9a-f]*' | head -1)
+    if [ -n "$new" ]; then
+        hermes sessions rename "$new" "$(printf '%s' "$msg" | tr '\n' ' ' | cut -c1-60)" >/dev/null 2>&1
+        echo "@@SESSION $new"
+    fi ;;
+claude)
+    mode=$2 session=$3 sid=$4 msg=$5
+    if [ "$mode" = quick ]; then
+        perms=(--permission-mode bypassPermissions --disallowedTools Edit Write MultiEdit NotebookEdit Bash)
+    else
+        perms=(--permission-mode acceptEdits --allowedTools WebSearch WebFetch --disallowedTools Bash)
+    fi
+    if [ "$session" = continue ]; then s=(--resume "$sid"); else s=(--session-id "$sid"); fi
+    exec claude -p --output-format stream-json --verbose --include-partial-messages \
+        "${s[@]}" "${perms[@]}" -- "$msg" </dev/null 2>&1 ;;
+sessions)
+    if [ "$2" = hermes ]; then
+        # columns: Title  Workspace  Last Active  ID (only this folder's sessions)
+        hermes sessions list --limit 15 --workspace "$PWD" 2>/dev/null | clean |
+            sed -nE 's/^(.*[^ ]) {2,}[^ ]+ {2,}(.*[^ ]) {2,}(local-[0-9a-f]+) *$/\3\t\1\t\2/p'
+    else
+        dir="$HOME/.claude/projects/$(pwd | tr '/.' '--')"
+        command ls -t "$dir"/*.jsonl 2>/dev/null | head -15 | while read -r f; do
+            title=$(jq -r 'select(.type=="user") | .message.content
+                | if type=="string" then . else (map(select(.type=="text")|.text)|join(" ")) end
+                | select(length > 0)' "$f" 2>/dev/null | head -1 | tr '\n\t' '  ' | cut -c1-60)
+            [ -n "$title" ] || continue
+            when=$(date -r "$f" '+%a %d %b %H:%M')
+            printf '%s\t%s\t%s\n' "$(basename "$f" .jsonl)" "$title" "$when"
+        done
+    fi ;;
+undo)
+    ref=$2; shift 2
+    for f in "$@"; do
+        if git cat-file -e "$ref:$f" 2>/dev/null; then git restore --source="$ref" --worktree -- "$f"
+        else rm -f -- "$f"; fi
+    done ;;
+esac

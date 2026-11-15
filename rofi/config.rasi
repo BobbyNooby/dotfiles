@@ -1,0 +1,166 @@
+/* Launcher (SUPER + Space). Edits apply the next time rofi opens.
+   Look: the "Spotlight" launcher from the desktop design (matches the Quickshell bar):
+   one centred box near the top, a big search field, mode tabs, tall rows with a description,
+   the chosen row filled in the accent colour. Ctrl+Tab switches mode.
+   Theme reference: `man rofi-theme`. Colours come from the wallpaper: matugen writes
+   colors.rasi (imported below). The values in * { } are the fallback (Tokyo Night). */
+
+configuration {
+  modi: "drun,run,window,calc,emoji,nerdy";
+  show-icons: true;
+  icon-theme: "Papirus-Dark";
+  font: "Inter 11";
+  terminal: "wezterm";
+  /* name, and the app's kind ("Web browser") underneath in small dim text */
+  drun-display-format: "{name}\n<span size='small' weight='normal' alpha='75%'>{generic}</span>";
+  window-format: "{t}\n<span size='small' weight='normal' alpha='75%'>{c} · workspace {w}</span>";
+  markup-rows: true;
+  display-drun: "Apps";
+  display-run: "Run";
+  display-window: "Windows";
+  display-calc: "Calculator";
+  display-emoji: "Emoji";
+  display-nerdy: "Nerd icons";
+  kb-mode-next: "Control+Tab";
+  kb-mode-previous: "Control+ISO_Left_Tab";
+  kb-row-tab: "";
+}
+
+* {
+  bg: #222639f2;
+  bg-alt: #292e42;
+  border-col: #3b4261;
+  fg: #c0caf5;
+  fg-dim: #a9b1d6;
+  accent: #7aa2f7;
+  accent-soft: #3d59a1;
+  on-accent: #1a1b26;
+  on-accent-soft: #dbe4ff;
+
+  background-color: transparent;
+  text-color: @fg;
+}
+
+/* matugen's colours (written by `setwall`; a default set is made on first rebuild) */
+@import "colors.rasi"
+
+window {
+  location: north;
+  anchor: north;
+  y-offset: 170px;
+  width: 700px;
+  padding: 14px;
+  border: 1px;
+  border-color: @border-col;
+  border-radius: 22px;
+  background-color: @bg;
+}
+
+mainbox {
+  spacing: 12px;
+  children: [ inputbar, mode-switcher, listview, hints ];
+}
+
+/* ---- search field: magnifier, what you type, how many matches ---- */
+inputbar {
+  children: [ textbox-search, entry, counter ];
+  spacing: 14px;
+  padding: 0px 18px;
+  border-radius: 14px;
+  background-color: @bg-alt;
+}
+textbox-search {
+  expand: false;
+  str: "";
+  font: "FiraCode Nerd Font Mono 15";
+  text-color: @accent;
+  vertical-align: 0.5;
+  padding: 16px 0px;
+}
+entry {
+  font: "Inter Medium 15";
+  placeholder: "Search";
+  placeholder-color: @fg-dim;
+  cursor-color: @accent;
+  vertical-align: 0.5;
+  padding: 14px 0px;
+}
+counter {
+  expand: false;
+  children: [ num-filtered-rows ];
+  padding: 4px 10px;
+  margin: 15px 0px;
+  border-radius: 8px;
+  background-color: @accent-soft;
+}
+num-filtered-rows {
+  font: "Inter SemiBold 9";
+  text-color: @on-accent-soft;
+  vertical-align: 0.5;
+}
+
+/* ---- mode tabs ---- */
+mode-switcher {
+  spacing: 4px;
+  expand: false;
+}
+button {
+  expand: false;
+  font: "Inter SemiBold 10";
+  padding: 7px 14px;
+  border-radius: 10px;
+  text-color: @fg-dim;
+}
+button selected {
+  background-color: @accent;
+  text-color: @on-accent;
+}
+
+/* ---- results ---- */
+listview {
+  lines: 6;
+  columns: 1;
+  spacing: 2px;
+  fixed-height: false;
+  scrollbar: false;
+}
+element {
+  padding: 10px 14px;
+  spacing: 14px;
+  border-radius: 14px;
+}
+element normal.normal, element alternate.normal {
+  background-color: transparent;
+  text-color: @fg;
+}
+element selected.normal, element selected.active {
+  background-color: @accent;
+  text-color: @on-accent;
+}
+element normal.active, element alternate.active {
+  text-color: @accent;
+}
+element-icon {
+  size: 38px;
+  vertical-align: 0.5;
+}
+element-text {
+  font: "Inter SemiBold 11";
+  vertical-align: 0.5;
+  text-color: inherit;
+}
+
+/* ---- key hints along the bottom ---- */
+hints {
+  orientation: horizontal;
+  expand: false;
+  children: [ textbox-hint-mode, textbox-hint-term, textbox-hint-esc ];
+  padding: 4px 6px 2px 6px;
+}
+textbox-hint-mode, textbox-hint-term, textbox-hint-esc {
+  font: "Inter 9";
+  text-color: @fg-dim;
+}
+textbox-hint-mode { str: "Ctrl+Tab next mode"; horizontal-align: 0.0; }
+textbox-hint-term { str: "Shift+Enter run in terminal"; horizontal-align: 0.5; }
+textbox-hint-esc  { str: "Esc close"; horizontal-align: 1.0; }

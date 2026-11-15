@@ -1,0 +1,34 @@
+# matugen: turns a wallpaper into a colour scheme and writes it into each app's config.
+# Run through `setwall <image>` (or Super+W), which also sets the wallpaper and reloads Hyprland.
+# Templates are in ./templates; the generated files are gitignored.
+# Docs: https://github.com/InioX/matugen
+
+[config]
+# Pick the most colourful candidate from the image without asking
+# (without this, matugen stops to ask, which fails when run from a keybind).
+prefer = "saturation"
+
+# Quickshell (bar, widgets, notifications): reloads the moment the file changes
+[templates.quickshell]
+input_path = "~/.config/matugen/templates/quickshell.json"
+output_path = "~/.config/quickshell/colors.json"
+
+# Hyprland window borders (loaded by hyprland.lua; setwall runs `hyprctl reload`)
+[templates.hyprland]
+input_path = "~/.config/matugen/templates/hyprland.lua"
+output_path = "~/.config/hypr/colors.lua"
+
+# WezTerm colour scheme "Matugen" (WezTerm watches the file and reloads)
+[templates.wezterm]
+input_path = "~/.config/matugen/templates/wezterm.toml"
+output_path = "~/.config/wezterm/colors/matugen.toml"
+
+# rofi (read each time it opens)
+[templates.rofi]
+input_path = "~/.config/matugen/templates/rofi.rasi"
+output_path = "~/.config/rofi/colors.rasi"
+
+# GTK 3/4 apps (Nautilus etc.), imported from gtk.css; apps pick it up when reopened
+[templates.gtk]
+input_path = "~/.config/matugen/templates/gtk.css"
+output_path = "~/.cache/matugen/gtk-colors.css"

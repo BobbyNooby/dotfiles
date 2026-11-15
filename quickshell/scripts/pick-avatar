@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Set your account picture: copies it to ~/.face (and ~/.face.icon), where the bar, login
+# screens and other apps look for it.
+#   pick-avatar <image>   use this one (the shell's picture grid, AvatarPicker.qml, calls this)
+#   pick-avatar           choose in rofi instead (a list with thumbnails)
+set -u
+if [ -n "${1:-}" ]; then
+    if ! { cp -f -- "$1" "$HOME/.face" && cp -f -- "$1" "$HOME/.face.icon"; }; then
+        notify-send -a "Account" "Couldn't set your picture" "Can't copy $1"
+        exit 1
+    fi
+    qs ipc call popups faceChanged >/dev/null 2>&1
+    exit 0
+fi
+# your picture folders, from ~/.config/desktop/settings.json (settings.nix desktop.folders)
+dirs=("$HOME/Pictures")
+while read -r d; do [ -n "$d" ] && dirs+=("$HOME/${d#\~/}"); done < <(jq -r '.folders | .pictures, .screenshots, .wallpapers // empty' "$HOME/.config/desktop/settings.json" 2>/dev/null)
+choice=$(
+    for d in "${dirs[@]}"; do [ -d "$d" ] && find "$d" -maxdepth 3 -type f \
+        \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) -printf '%T@\t%p\n'; done |
+    sort -rn | head -300 | cut -f2 |
+    while read -r f; do printf '%s\0icon\x1f%s\n' "${f/#$HOME/~}" "$f"; done |
+    rofi -dmenu -i -p "Picture" -show-icons -theme-str 'element-icon { size: 64px; } listview { lines: 6; }'
+) || exit 0
+[ -n "$choice" ] || exit 0
+src=${choice/#\~/$HOME}
+cp -f -- "$src" "$HOME/.face" && cp -f -- "$src" "$HOME/.face.icon"
+qs ipc call popups faceChanged >/dev/null 2>&1 # the bar shows it at once

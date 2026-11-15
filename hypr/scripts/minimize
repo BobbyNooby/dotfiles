@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Minimize for Hyprland (it has no minimize of its own): parks windows on a hidden special
+# workspace called "minimized", so apps like Surfshark keep running without being closed.
+#   minimize                      hide the focused window (Super + M)
+#   minimize restore <address>    bring that window back to the workspace you're on
+#                                 (Alt+Tab does this when you pick a minimized window)
+set -euo pipefail
+
+# Moving a window to a special workspace can leave that workspace showing: hide it again
+hide_special() {
+    if hyprctl monitors -j | jq -e '.[] | select(.focused) | .specialWorkspace.name == "special:minimized"' >/dev/null; then
+        hyprctl dispatch 'hl.dsp.workspace.toggle_special("minimized")' >/dev/null
+    fi
+}
+
+if [[ "${1:-}" == restore ]]; then
+    addr=$2
+    ws=$(hyprctl activeworkspace -j | jq -r .id)
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null
+    hyprctl dispatch "hl.dsp.window.move({ workspace = $ws })" >/dev/null
+    hide_special
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null
+else
+    hyprctl dispatch 'hl.dsp.window.move({ workspace = "special:minimized" })' >/dev/null
+    hide_special
+fi

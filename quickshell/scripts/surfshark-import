@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Import Surfshark WireGuard configs into NetworkManager, one connection per location, so the
+# desktop's Surfshark tile can switch them and pick the location.
+#   surfshark-import                 every *.conf in ~/Downloads that looks like Surfshark's
+#   surfshark-import a.conf b.conf   just these
+#
+# Get the files: surfshark.com → VPN → Manual setup → Desktop or mobile → WireGuard →
+# "I don't have a key pair" → Generate (once) → pick locations → download each .conf.
+# The private key ends up in NetworkManager's own store (root-only), never in ~/nixos-config.
+# After importing, the downloaded .conf files hold the key in plain text: delete them.
+set -euo pipefail
+
+files=("$@")
+if [ ${#files[@]} -eq 0 ]; then
+    shopt -s nullglob nocaseglob
+    files=("$HOME"/Downloads/*surfshark*.conf "$HOME"/Downloads/*_wg.conf)
+fi
+[ ${#files[@]} -gt 0 ] || { echo "No Surfshark .conf files found in ~/Downloads (or pass them as arguments)."; exit 1; }
+
+tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+for f in "${files[@]}"; do
+    # "uk-lon.prod.surfshark.com_wg.conf" → "uk-lon"
+    loc=$(basename "$f" .conf); loc=${loc%_wg}; loc=${loc%%.*}; loc=$(echo "$loc" | tr 'A-Z' 'a-z' | tr -c 'a-z0-9-\n' '-')
+    name="surfshark-$loc"
+    if nmcli -t -f NAME connection show | grep -qx "$name"; then echo "skip  $name (already imported)"; continue; fi
+    # The interface is named after the file and may be at most 15 characters
+    iface="ss-${loc:0:12}"
+    cp "$f" "$tmp/$iface.conf"
+    nmcli connection import type wireguard file "$tmp/$iface.conf" >/dev/null
+    nmcli connection modify "$iface" connection.id "$name" connection.autoconnect no
+    nmcli connection down "$name" >/dev/null 2>&1 || true # importing brings it up; start off
+    echo "added $name"
+done
+echo "Done. Delete the downloaded .conf files now (they contain your private key)."
