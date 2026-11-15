@@ -40,11 +40,12 @@ Singleton {
     readonly property real cardOpacity: 0.74
 
     // ---- type and corners: ONE setting ----
-    // The six pairings from the design canvas's Typography page. Change `typeface` and save:
+    // The six pairings from the design canvas's Typography page:
     //   outfit (A, now) · grotesk (B) · mono (C) · condensed (D) · serif (E) · dotmatrix (F)
     // Each sets the display font (clocks, numbers, headings), the body font, italic / capital
     // headings, and how round the corners are. Fonts not installed fall back to a default.
-    readonly property string typeface: "outfit"
+    // Set in settings.nix (desktop.typeface) or the Settings window (Super+I → Appearance).
+    readonly property string typeface: Settings.typeface
     readonly property var typefaces: ({
         outfit:    { display: "Outfit",           body: "Inter",          italic: false, caps: false, radius: 1.0 },
         grotesk:   { display: "Space Grotesk",    body: "IBM Plex Sans",  italic: false, caps: false, radius: 0.45 },

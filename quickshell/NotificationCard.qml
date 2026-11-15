@@ -33,11 +33,12 @@ Rectangle {
     border.color: critical ? Theme.danger : "transparent"
     border.width: critical ? 2 : 0
 
-    // Popups disappear after the app's timeout (6 s by default); hovering keeps them up.
+    // Popups disappear after the app's timeout (else Notifs.popupSeconds, 6 s by default);
+    // hovering keeps them up.
     // Critical ones (e.g. battery) stay until you close them.
     Timer {
         running: card.popup && !card.critical && !hover.hovered
-        interval: (card.notif?.expireTimeout ?? 0) > 0 ? card.notif.expireTimeout * 1000 : 6000
+        interval: (card.notif?.expireTimeout ?? 0) > 0 ? card.notif.expireTimeout * 1000 : Notifs.popupSeconds * 1000
         onTriggered: card.hide()
     }
     HoverHandler { id: hover }

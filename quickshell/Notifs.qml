@@ -9,8 +9,8 @@
 //   qs ipc call notifs mute <app>      no popups from that app (still listed); again = unmute
 //   qs ipc call notifs muted           which apps are muted
 //
-// Muted apps and Do not disturb are kept in ~/.local/state/quickshell/.../notifs.json, so they
-// survive restarts.
+// Muted apps, Do not disturb, how long popups stay and the apps seen so far are kept in
+// ~/.local/state/quickshell/.../notifs.json, so they survive restarts (Settings window, Super+I).
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -22,7 +22,10 @@ Singleton {
 
     property bool dnd: false          // do not disturb: no popups (they still land in the list)
     property var muted: []            // app names whose notifications never pop up
+    property int popupSeconds: 6      // how long a popup stays when the app doesn't say
+    property var seen: []             // every app that has sent something (the Settings window lists them)
     onDndChanged: save()
+    onPopupSecondsChanged: save()
     readonly property bool centerOpen: Popups.open === "notifs"
     property var popups: []           // notifications currently shown as popups
 
@@ -67,7 +70,7 @@ Singleton {
 
     // Saved settings (muted apps, Do not disturb)
     property bool loaded: false
-    function save() { if (loaded) store.setText(JSON.stringify({ dnd, muted }, null, 2)) }
+    function save() { if (loaded) store.setText(JSON.stringify({ dnd, muted, popupSeconds, seen }, null, 2)) }
     FileView {
         id: store
         path: Quickshell.statePath("notifs.json")
@@ -78,6 +81,8 @@ Singleton {
                 const d = JSON.parse(text() || "{}");
                 root.dnd = !!d.dnd;
                 root.muted = Array.isArray(d.muted) ? d.muted : [];
+                root.popupSeconds = Number(d.popupSeconds) > 0 ? Number(d.popupSeconds) : 6;
+                root.seen = Array.isArray(d.seen) ? d.seen : [];
             } catch (e) {}
             root.loaded = true;
         }
@@ -105,6 +110,8 @@ Singleton {
         onNotification: n => {
             n.tracked = true; // keep it in the list until dismissed
             root.times[n.id] = Date.now();
+            const app = n.appName || "Other";
+            if (!root.seen.includes(app)) { root.seen = [...root.seen, app].slice(-60); root.save() }
             if (!root.centerOpen) root.unread++;
             n.closed.connect(() => root.dismissPopup(n)); // closed by the app or dismissed
             const quiet = root.dnd || root.isMuted(n.appName || "Other");

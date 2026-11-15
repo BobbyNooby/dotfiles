@@ -1,5 +1,6 @@
 // The volume / brightness indicator: a small pill under the bar with an icon, a level bar and
-// the %, shown for a moment whenever either changes.
+// the %, shown for a moment whenever either changes. Switching typing language (Ctrl+Space,
+// Input.qml) shows the languages in the same pill, with the new one lit.
 //   volume:     watched straight from PipeWire (keys, the bar, any app)
 //   brightness: the brightness keys run `qs ipc call osd brightness` after changing it
 //               (the kernel's backlight file can't be watched for changes)
@@ -19,12 +20,12 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "qs-osd"
     color: "transparent"
-    implicitWidth: 320 + 40
+    implicitWidth: Math.max(320, pill.width) + 40
     implicitHeight: 56 + 40
     mask: Region {} // never catches clicks
     visible: pill.opacity > 0
 
-    property string kind: "volume"   // what's showing: "volume" | "brightness"
+    property string kind: "volume"   // what's showing: "volume" | "brightness" | "language"
     property real level: 0           // 0..1
     property bool muted: false
     function show(k, v, m) {
@@ -33,6 +34,14 @@ PanelWindow {
         hide.restart();
     }
     Timer { id: hide; interval: 1400; onTriggered: pill.shown = false }
+
+    // ---- typing language: Input.qml (not for the first reading at startup) ----
+    property bool inputReady: false
+    Timer { running: true; interval: 4000; onTriggered: win.inputReady = true }
+    Connections {
+        target: Input
+        function onCurrentChanged() { if (win.inputReady) win.show("language", 0, false) }
+    }
 
     // ---- volume: PipeWire ----
     readonly property var sink: Pipewire.defaultAudioSink
@@ -69,7 +78,7 @@ PanelWindow {
         id: pill
         property bool shown: false
         anchors.centerIn: parent
-        width: 320
+        width: win.kind === "language" ? langRow.implicitWidth + 36 : 320
         height: 56
         radius: Theme.r(20)
         color: Theme.alpha(Theme.bgLow, 0.96)
@@ -78,7 +87,35 @@ PanelWindow {
         Behavior on opacity { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
         Behavior on scale { NumberAnimation { duration: 160; easing.type: Easing.OutCubic } }
 
+        // Languages: each one's mark, the current one in a filled chip with its name
         RowLayout {
+            id: langRow
+            visible: win.kind === "language"
+            anchors.centerIn: parent
+            spacing: 6
+            Icon { name: "keyboard"; size: 18; color: Theme.textDim; Layout.rightMargin: 6 }
+            Repeater {
+                model: Input.methods
+                Rectangle {
+                    required property string modelData
+                    readonly property bool on: modelData === Input.current
+                    implicitWidth: chipText.implicitWidth + 22
+                    implicitHeight: 34
+                    radius: height / 2
+                    color: on ? Theme.accent : "transparent"
+                    Txt {
+                        id: chipText
+                        anchors.centerIn: parent
+                        text: parent.on ? Input.label(parent.modelData) + "  " + Input.title(parent.modelData) : Input.label(parent.modelData)
+                        font.weight: Font.DemiBold
+                        color: parent.on ? Theme.textOnAccent : Theme.textDim
+                    }
+                }
+            }
+        }
+
+        RowLayout {
+            visible: win.kind !== "language"
             anchors { fill: parent; leftMargin: 18; rightMargin: 18 }
             spacing: 14
             Icon {

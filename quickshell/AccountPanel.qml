@@ -58,7 +58,8 @@ Dropdown {
         spacing: 2
         Row { icon: "user"; label: "Change picture"; onClicked: win.run("qs ipc call avatarpicker open") }
         Row { icon: "image"; label: "Change wallpaper"; onClicked: win.run("qs ipc call wallpicker open") }
-        Row { icon: "gear"; label: "Settings"; onClicked: { Popups.close(); Controls.toggle() } }
+        Row { icon: "eq"; label: "Quick settings"; onClicked: { Popups.close(); Controls.toggle() } }
+        Row { icon: "gear"; label: "All settings"; onClicked: win.run("qs ipc call settings open ''") } // Super+I
     }
     Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.alpha(Theme.textDim, 0.1) }
 

@@ -25,7 +25,8 @@ hl.monitor({
 
 local terminal    = "wezterm"
 local fileManager = "nautilus"
-local menu        = "rofi -show drun"
+local launcher    = "qs ipc call launcher toggle" -- Quickshell launcher (dotfiles/quickshell/Launcher.qml)
+local menu        = "rofi -show drun" -- fallback launcher (Super+Shift+Space)
 
 
 -------------------
@@ -40,6 +41,7 @@ hl.on("hyprland.start", function()
     -- hypridle: started by its systemd user service (not here: that ran it twice)
     hl.exec_cmd("nm-applet --indicator")
     hl.exec_cmd("wl-paste --watch cliphist store") -- clipboard history
+    hl.exec_cmd("command -v fcitx5 >/dev/null && fcitx5 -d --replace") -- typing languages (modules/input-method.nix, Ctrl+Space)
 end)
 
 
@@ -110,7 +112,7 @@ pcall(require, "colors")
 -- transparent parts (the gap above the bar, rounded corners).
 hl.layer_rule({
     name         = "blur-shell",
-    match        = { namespace = "^(qs-bar|qs-widgets|qs-notifications|qs-popup|qs-hermes|qs-switcher|qs-cheatsheet|qs-control-center|rofi)$" },
+    match        = { namespace = "^(qs-bar|qs-widgets|qs-notifications|qs-popup|qs-hermes|qs-switcher|qs-cheatsheet|qs-launcher|qs-control-center|rofi)$" },
     blur         = true,
     ignore_alpha = 0.2,
 })
@@ -191,7 +193,8 @@ local mainMod = "SUPER"
 
 -- Apps
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
-hl.bind(mainMod .. " + Space",  hl.dsp.exec_cmd(menu))
+hl.bind(mainMod .. " + Space",  hl.dsp.exec_cmd(launcher))
+hl.bind(mainMod .. " + SHIFT + Space", hl.dsp.exec_cmd(menu)) -- rofi, if the shell is broken
 hl.bind(mainMod .. " + E",      hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("hyprlock"))
 -- TESTING the new Eva lock screen (dotfiles/quickshell/LockScreen.qml). hyprlock stays on
@@ -262,9 +265,11 @@ hl.bind("SHIFT + Print", hl.dsp.exec_cmd(shot .. 'grim' .. done))
 
 -- Control Center: Wi-Fi, Bluetooth, sound, power mode, brightness... (like Cmd + , on macOS)
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("qs ipc call controls toggle"))
+hl.bind(mainMod .. " + I",     hl.dsp.exec_cmd("qs ipc call settings toggle")) -- Settings window (SettingsWindow.qml)
 
 -- Clipboard history picker
 hl.bind(mainMod .. " + SHIFT + V", hl.dsp.exec_cmd("cliphist list | rofi -dmenu -p clipboard | cliphist decode | wl-copy"))
+hl.bind("CTRL + space", hl.dsp.exec_cmd("qs ipc call input next")) -- next typing language (fcitx5: English, Japanese, Mandarin, Cantonese; Input.qml)
 
 -- Quickshell: restart it, notification list, do not disturb, pick a wallpaper
 -- (`qs kill` stops one copy at a time: keep going until none is left, so a restart never

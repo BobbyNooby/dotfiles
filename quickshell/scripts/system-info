@@ -1,0 +1,24 @@
+#!/bin/sh
+# key=value lines about this machine, for Settings → About (SetAboutPage.qml).
+# GPUs come from sysfs + pciutils' name list, not `lspci`: lspci reads each card's config
+# space, which wakes the sleeping NVIDIA card.
+echo "host=$(cat /etc/hostname 2>/dev/null || uname -n)"
+echo "nixos=$(nixos-version 2>/dev/null)"
+echo "system=$(readlink /run/current-system)"
+link=$(readlink /nix/var/nix/profiles/system)                     # system-10-link
+echo "gen=$(echo "$link" | sed 's/^system-\([0-9]*\)-link$/\1/')"
+echo "gendate=$(stat -c %y "/nix/var/nix/profiles/$link" 2>/dev/null | cut -d: -f1,2)" # store files are dated 1970: use the link's date
+echo "kernel=$(uname -r)"
+echo "cpu=$(sed -n 's/^model name\s*: //p' /proc/cpuinfo | head -1)"
+echo "cores=$(nproc)"
+ids="$(dirname "$(readlink -f "$(command -v lspci)")" 2>/dev/null)/../share/pci.ids"
+for d in /sys/bus/pci/devices/*; do
+    case "$(cat "$d/class")" in 0x03*) ;; *) continue ;; esac   # display controllers
+    v=$(cut -c3- "$d/vendor"); p=$(cut -c3- "$d/device")
+    name=$(awk -v v="$v" -v p="$p" '
+        $1 == v && !/^\t/ { vn = substr($0, 7); f = 1; next }
+        f && /^[^\t#]/ { f = 0 }
+        f && $1 == p && /^\t[^\t]/ { sub(/^\t[0-9a-f]+  /, ""); print vn " " $0; exit }' "$ids" 2>/dev/null)
+    echo "gpu=${name:-$v:$p}"
+done
+df -h --output=used,size,pcent / | tail -1 | awk '{ print "disk=" $1 " of " $2 " used (" $3 ")" }'

@@ -3,7 +3,7 @@
 //   tiles     Wi-Fi, Bluetooth, Do not disturb, Sound (click to switch; › opens its full popup)
 //   sliders   volume and screen brightness
 //   power     Saver / Balanced / Performance
-//   footer    network settings, lock, and the account popup (sleep, restart, shut down)
+//   footer    All settings (the Settings window, Super+I), lock, and the account popup (sleep, restart, shut down)
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -162,7 +162,8 @@ Dropdown {
     RowLayout {
         Layout.fillWidth: true
         spacing: 8
-        IconButton { icon: "gear"; label: "Network"; onClicked: { Popups.close(); Quickshell.execDetached(["nm-connection-editor"]) } }
+        // the full Settings window (Super+I); the network editor is under its Wi-Fi page
+        IconButton { icon: "gear"; label: "All settings"; onClicked: Quickshell.execDetached(["qs", "ipc", "call", "settings", "open", ""]) }
         Item { Layout.fillWidth: true }
         IconButton { icon: "lock"; label: "Lock"; onClicked: { Popups.close(); Quickshell.execDetached(["loginctl", "lock-session"]) } }
         IconButton { icon: "power"; label: ""; onClicked: win.more("account") }

@@ -60,31 +60,6 @@ PanelWindow {
         return m;
     }
 
-    // ---- keyboard language (Hyprland's active layout) ----
-    property string layoutName: ""
-    readonly property string layoutCode: {
-        const n = layoutName.toLowerCase();
-        if (/chinese|pinyin/.test(n)) return "中";
-        if (/japan/.test(n)) return "日";
-        if (/malay/.test(n)) return "MS";
-        return n ? n.slice(0, 2).toUpperCase() : "EN";
-    }
-    Process {
-        running: true
-        command: ["hyprctl", "devices", "-j"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try { bar.layoutName = JSON.parse(text).keyboards.find(k => k.main)?.active_keymap ?? "" } catch (e) {}
-            }
-        }
-    }
-    Connections {
-        target: Hyprland
-        function onRawEvent(event) {
-            if (event.name === "activelayout") bar.layoutName = event.data.split(",").slice(1).join(",");
-        }
-    }
-
     // ---- audio / battery ----
     readonly property var sink: Pipewire.defaultAudioSink
     readonly property real volume: sink?.audio?.volume ?? 0
@@ -267,17 +242,21 @@ PanelWindow {
                 }
             }
 
-            // Keyboard language: click = next layout
+            // Typing language (Input.qml, fcitx5): click = the list (InputPanel.qml), scroll = next.
+            // Ctrl+Space anywhere = next.
             Clicky {
+                id: kbBtn
                 implicitWidth: Math.max(40, kbRow.implicitWidth + 16)
                 implicitHeight: 32
-                onClicked: bar.run("hyprctl switchxkblayout main next")
+                base: Popups.open === "input" ? Theme.bgHighest : "transparent"
+                onClicked: Popups.toggle("input", bar.centreOf(kbBtn))
+                WheelHandler { onWheel: Input.next() }
                 RowLayout {
                     id: kbRow
                     anchors.centerIn: parent
                     spacing: 6
                     Icon { name: "keyboard"; size: 16; color: Theme.textDim }
-                    Txt { text: bar.layoutCode; font.pixelSize: 12; font.weight: Font.DemiBold }
+                    Txt { text: Input.label(Input.current); font.pixelSize: 12; font.weight: Font.DemiBold }
                 }
             }
 

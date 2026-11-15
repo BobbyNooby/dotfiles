@@ -36,7 +36,13 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
   - Wi-Fi, Bluetooth, volume, battery;
   - notifications grouped by app, with Do not disturb and per-app mute;
   - Quick settings.
+- **Settings window (Super+I):** Wi-Fi & VPN, Bluetooth, sound (devices, per-app volume,
+  EasyEffects presets), notifications, keyboard & typing languages, appearance (wallpaper,
+  typeface, lock glow, widgets), clocks & weather, power, about. Desktop settings changed there
+  go to `~/.config/desktop/overrides.json`, on top of `settings.json`.
 - **Overlays:**
+  - launcher (Super+Space): apps, windows, switches and actions, a calculator, files, emoji,
+    clipboard history and web searches in one box (`>` runs a command, `:` emoji, `f` files);
   - wallpaper switcher (Super+W): folders as tabs, Now vs New with the colours each would give, a tilting carousel;
   - picture picker;
   - cheat sheet (Super+/);
@@ -99,7 +105,7 @@ Press **Super+/** for the full list. The essentials:
 
 | Keys | |
 |---|---|
-| Super+Space | launcher |
+| Super+Space | launcher (Super+Shift+Space: rofi) |
 | Super+Return | terminal |
 | Super+Q / F / V | close / fullscreen / float |
 | Super+1…0, Super+Shift+1…0 | go to workspace / move window there |
@@ -108,6 +114,7 @@ Press **Super+/** for the full list. The essentials:
 | Super+W | wallpaper switcher |
 | Super+A | Hermes / Claude side panel |
 | Super+, | Quick settings |
+| Super+I | Settings window |
 | Super+N | notifications |
 | Print / Shift+Print | screenshot region / screen |
 | Middle-click a tray icon | quit that app |

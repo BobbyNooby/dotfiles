@@ -1,0 +1,25 @@
+#!/usr/bin/env sh
+# File search for the launcher (Launcher.qml): `f name`, `~/path` or `/path`.
+# Prints "d<TAB>path" for folders and "f<TAB>path" for files, at most 60 of each.
+#   launcher-files "notes"        names containing all the words, anywhere in your home
+#   launcher-files "~/Doc/inv"    under ~/Doc... : the folder you typed, then the name
+# Hidden files, .gitignored things and caches are skipped (fd's defaults + the list below).
+q=$1
+case $q in "~"*) q="$HOME${q#\~}" ;; esac
+case $q in
+  /*) dir=${q%/*}; pat=${q##*/}; [ -z "$dir" ] && dir=/; depth="--max-depth 4" ;;
+  *)  dir=$HOME; pat=$q; depth="" ;;
+esac
+[ -d "$dir" ] || exit 0
+[ -z "$pat" ] && depth="--max-depth 1" # just a folder typed: list what's in it
+# "two words" → names with both, in that order
+pat=$(printf '%s' "$pat" | sed 's/[][\.*^$+?(){}|]/\\&/g; s/  */.*/g')
+skip="--exclude node_modules --exclude target --exclude dist --exclude build --exclude __pycache__ --exclude go/pkg --exclude .cache"
+if command -v fd >/dev/null 2>&1; then
+  # shellcheck disable=SC2086
+  { fd -i -t d $depth $skip --max-results 60 --absolute-path -- "$pat" "$dir" | sed 's|/$||; s/^/d\t/'
+    fd -i -t f $depth $skip --max-results 60 --absolute-path -- "$pat" "$dir" | sed 's/^/f\t/'; } 2>/dev/null
+else
+  find "$dir" ${depth:+-maxdepth 4} -name '.*' -prune -o -iregex ".*/[^/]*$pat[^/]*" -printf '%y\t%p\n' 2>/dev/null \
+    | sed -n 's/^\([df]\)/\1/p' | head -120
+fi

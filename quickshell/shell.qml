@@ -12,7 +12,7 @@
 //   DesktopWidgets.qml      clocks + weather, System, Connections, lyrics, music controller
 //   Wallpaper.qml           draws the wallpaper chosen with `setwall`
 //   Popups.qml              which dropdown is open; Dropdown.qml is the base they share:
-//     AccountPanel.qml (your picture; Avatar.qml draws it) MemoryPanel.qml (what uses the RAM) MusicPanel.qml WifiPanel.qml BluetoothPanel.qml VolumePanel.qml BatteryPanel.qml NotificationCenter.qml
+//     AccountPanel.qml (your picture; Avatar.qml draws it) MemoryPanel.qml (what uses the RAM) InputPanel.qml (typing language) MusicPanel.qml WifiPanel.qml BluetoothPanel.qml VolumePanel.qml BatteryPanel.qml NotificationCenter.qml
 //   HermesPanel.qml         Super+A side panel (chat in Hermes.qml, scripts/ask)
 //   WallpaperPicker.qml     Super+W: tabs, Now vs New with their colours, a tilting carousel
 //   AvatarPicker.qml        account picture grid (ImageList.qml finds images, WallColors.qml previews colours)
@@ -20,12 +20,17 @@
 //   LockScreen.qml          the Eva 7 lock screen (EvaBoard.qml draws it, EvaStyle.qml + EvaTag.qml its look)
 //                           `qs ipc call lock lock`; unlocks through PAM
 //   Switcher.qml            Alt+Tab window switcher (hold Alt, Tab to step, let go to switch)
+//   Launcher.qml            Super+Space search: apps, windows, actions, sums, files, emoji, web
+//                           (LauncherRow.qml one line, LauncherLib.js matching + calculator, scripts/launcher-files)
 //   CheatSheet.qml          Super + / : keys and aliases over everything (lists in Shortcuts.qml,
 //                           aliases read by scripts/aliases; KeyList.qml draws a list)
 //   Notifs.qml              notification daemon (replaces mako)
+//   Input.qml               typing language (fcitx5): the bar's indicator, Ctrl+Space
 //   NotificationPopups.qml  popups in the corner; NotificationCard.qml is one notification
 //   ControlCenter.qml       Quick settings: tiles, volume + brightness, power mode (Super + ,)
 //   Controls.qml            `qs ipc call controls toggle` for it
+//   SettingsWindow.qml      Settings (Super+I): a page per topic, Set<Name>Page.qml each, built from
+//                           SetPage/SetCard/SetRow/SetChoice/SetButton/SetField + OverrideNote.qml
 //   data: Media (player + lyrics), Stats (CPU, memory, GPU), Weather, Net (Wi-Fi),
 //         Vpn (Tailscale + Surfshark, the Connections card)
 //   scripts/wifi-menu       network picker in rofi (for new secured networks)
@@ -49,6 +54,7 @@ ShellRoot {
 
     AccountPanel {}
     MemoryPanel {}
+    InputPanel {}
     MusicPanel {}
     WifiPanel {}
     BluetoothPanel {}
@@ -61,7 +67,9 @@ ShellRoot {
     WallpaperPicker {}
     AvatarPicker {}
     Switcher {}
+    Launcher {}
     LockScreen {}
     LevelOsd {}
     ControlCenter {}
+    SettingsWindow {}
 }
