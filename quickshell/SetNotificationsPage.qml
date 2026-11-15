@@ -3,7 +3,6 @@
 // All of it lives in Notifs.qml and is saved in its notifs.json (no Nix needed).
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 
 SetPage {
     id: page

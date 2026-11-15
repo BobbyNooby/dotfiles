@@ -10,6 +10,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Bluetooth
 import Quickshell.Services.Pipewire
+import "Common.js" as Common
 import Quickshell.Services.UPower
 
 Dropdown {
@@ -43,9 +44,9 @@ Dropdown {
         command: ["brightnessctl", "-m"] // e.g. amdgpu_bl2,backlight,45875,70%,65535
         stdout: StdioCollector {
             onStreamFinished: {
-                const f = text.trim().split(",");
-                win.hasBacklight = f.length >= 5;
-                if (win.hasBacklight) win.brightness = Number(f[2]) / Number(f[4]);
+                const b = Common.brightness(text);
+                win.hasBacklight = b >= 0;
+                if (win.hasBacklight) win.brightness = b;
             }
         }
     }
@@ -54,8 +55,6 @@ Dropdown {
         interval: 40
         onTriggered: Quickshell.execDetached(["brightnessctl", "-q", "set", Math.round(win.brightness * 100) + "%"])
     }
-
-
 
     // ---------------- the panel ----------------
     RowLayout {

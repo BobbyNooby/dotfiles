@@ -114,7 +114,7 @@ SetPage {
             current: Settings.lockGlow
             onPicked: v => Settings.set("lockGlow", v)
         }
-        Txt { Layout.leftMargin: 12; Layout.bottomMargin: 6; text: "Halos, scanlines and vignette on the Eva lock screen (Super+Ctrl+Escape to try)."; font.pixelSize: 12; color: Theme.textDim }
+        Txt { Layout.leftMargin: 12; Layout.bottomMargin: 6; text: "Halos, scanlines and vignette on the Eva lock screen (Super+Escape to try)."; font.pixelSize: 12; color: Theme.textDim }
         OverrideNote { key: "lockGlow"; Layout.margins: 6 }
     }
 

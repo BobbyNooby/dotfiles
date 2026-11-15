@@ -3,7 +3,6 @@
 // ~/.config/desktop/overrides.json (the note below offers the settings.nix lines).
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 
 SetPage {
     id: page

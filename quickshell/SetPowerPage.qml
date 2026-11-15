@@ -1,10 +1,10 @@
 // Settings → Power: the power profile (power-profiles-daemon), the battery (charge, time left,
-// draw, health) and what happens when you leave the laptop idle (read from
-// hypr/hypridle.conf; edit that file to change the times).
+// draw, health), what happens when you leave the laptop idle (dim, lock, screen off, sleep) and
+// what closing the lid does. Idle changes apply at once (Settings.setIdle → hypr/scripts/
+// idle-config rewrites hypridle.conf); the lid is the system's (logind), so it needs a rebuild.
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import Quickshell.Services.UPower
 
 SetPage {
@@ -77,44 +77,65 @@ SetPage {
         }
     }
 
-    // ---- idle (hypridle.conf) ----
-    property var idle: [] // [{ secs, what }]
-    FileView {
-        path: Quickshell.env("HOME") + "/.config/hypr/hypridle.conf"
-        watchChanges: true
-        onFileChanged: reload()
-        printErrors: false
-        onLoaded: {
-            // each `listener { timeout = N  # 5 min: lock ... }`: the time and the comment's words
-            // (a RegExp loop: this JavaScript has no String.matchAll)
-            const out = [], re = /listener\s*\{[^}]*?timeout\s*=\s*(\d+)[ \t]*(?:#\s*([^\n]*))?/g;
-            const t = text();
-            let m;
-            while ((m = re.exec(t)) !== null) {
-                const words = (m[2] ?? "").replace(/^[^:]*:\s*/, "");
-                out.push({ secs: Number(m[1]), what: words || "action" });
-            }
-            page.idle = out.sort((a, b) => a.secs - b.secs);
-        }
-    }
-    function dur(s) { return s < 60 ? s + " s" : s % 60 === 0 ? (s / 60) + " min" : (s / 60).toFixed(1) + " min" }
+    // ---- idle (Settings.idle → hypridle) ----
+    function dur(s) { return s <= 0 ? "never" : s < 60 ? s + " s" : s % 60 === 0 ? (s / 60) + " min" : (s / 60).toFixed(1) + " min" }
+    function mins(list) { return list.map(m => ({ value: m * 60, label: m === 0 ? "Never" : m < 60 ? m + " min" : (m / 60) + " h" })) }
 
     SetCard {
         title: "When idle"
         Repeater {
-            model: page.idle
-            SetRow {
+            model: [
+                { key: "dim", icon: "sun", label: "Dim the screen", choices: page.mins([0, 1, 2.5, 5, 10]) },
+                { key: "lock", icon: "lock", label: "Lock", choices: page.mins([0, 2, 5, 10, 15, 30]) },
+                { key: "screenOff", icon: "power", label: "Turn the screen off", choices: page.mins([0, 2, 5.5, 10, 15, 30]) },
+                { key: "suspend", icon: "moon", label: "Sleep", choices: page.mins([0, 15, 30, 60, 120]) }
+            ]
+            ColumnLayout {
+                id: step
                 required property var modelData
-                icon: /lock/.test(modelData.what) ? "lock" : /suspend|sleep/.test(modelData.what) ? "moon" : /off/.test(modelData.what) ? "power" : "sun"
-                label: "After " + page.dur(modelData.secs)
-                sub: modelData.what
+                readonly property int secs: Settings.idle[modelData.key] ?? 0
+                Layout.fillWidth: true
+                spacing: 0
+                SetRow { icon: step.modelData.icon; label: step.modelData.label; sub: step.secs > 0 ? "After " + page.dur(step.secs) + " idle" : "Never" }
+                SetChoice {
+                    Layout.leftMargin: 6
+                    Layout.rightMargin: 6
+                    Layout.bottomMargin: 6
+                    options: step.modelData.choices
+                    current: step.secs
+                    onPicked: v => Settings.setIdle(step.modelData.key, v)
+                }
             }
         }
-        Txt { visible: page.idle.length === 0; Layout.margins: 12; text: "No hypridle.conf found."; color: Theme.textDim }
+        SetRow {
+            icon: "bolt"
+            label: "Sleep on the charger too"
+            sub: Settings.idle.suspendPluggedIn ? "Sleeps after the time above, plugged in or not" : "Only sleeps on battery"
+            toggle: true
+            on: Settings.idle.suspendPluggedIn
+            onSwitched: Settings.setIdle("suspendPluggedIn", !Settings.idle.suspendPluggedIn)
+        }
+        SetRow {
+            icon: "lock"
+            label: "Lock before sleeping"
+            sub: Settings.idle.lockOnSleep ? "Waking up (lid, sleep) asks for your password" : "Waking up goes straight to the desktop"
+            toggle: true
+            on: Settings.idle.lockOnSleep
+            onSwitched: Settings.setIdle("lockOnSleep", !Settings.idle.lockOnSleep)
+        }
+        OverrideNote { key: "idle"; Layout.margins: 6 }
+    }
+
+    // ---- lid (logind: settings.nix only) ----
+    function lidText(v) { return v === "lock" ? "Lock, stay awake" : v === "ignore" ? "Nothing" : "Sleep" }
+    SetCard {
+        title: "Closing the lid"
+        SetRow { icon: "battery"; label: "On battery"; sub: page.lidText(Settings.idle.lid) }
+        SetRow { icon: "bolt"; label: "On the charger"; sub: page.lidText(Settings.idle.lidPluggedIn) }
         Txt {
             Layout.fillWidth: true
             Layout.margins: 12
-            text: "Read from dotfiles/hypr/hypridle.conf. Change the times there, then restart hypridle (systemctl --user restart hypridle)."
+            text: "Set by the system: change lid / lidPluggedIn under desktop.idle in settings.nix (\"suspend\", \"lock\" or \"ignore\"), then rebuild."
             wrapMode: Text.Wrap
             font.pixelSize: 12
             color: Theme.outline

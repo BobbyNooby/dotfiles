@@ -4,6 +4,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
+import "Common.js" as Common
 
 Dropdown {
     id: win
@@ -55,7 +56,7 @@ Dropdown {
                     anchors { fill: parent; leftMargin: 12; rightMargin: 12 }
                     spacing: 12
                     Icon {
-                        name: /audio|headset|headphone/.test(row.modelData.icon ?? "") ? "headphones" : "bluetooth"
+                        name: Common.btKind(row.modelData)
                         size: 18
                         color: row.fg
                     }

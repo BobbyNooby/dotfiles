@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
+import "Common.js" as Common
 
 SetPage {
     id: page
@@ -23,7 +24,6 @@ SetPage {
     // Stop scanning when you leave the page (scanning costs battery)
     Component.onDestruction: if (adapter?.discovering) adapter.discovering = false
 
-    function kind(d) { return /audio|headset|headphone/.test(d.icon ?? "") ? "headphones" : /input-keyboard/.test(d.icon ?? "") ? "keyboard" : "bluetooth" }
     function stateText(d) {
         if (d.pairing) return "Pairing…";
         if (d.state === BluetoothDeviceState.Connecting) return "Connecting…";
@@ -52,7 +52,7 @@ SetPage {
             SetRow {
                 id: dev
                 required property var modelData
-                icon: page.kind(modelData)
+                icon: Common.btKind(modelData)
                 label: modelData.name || modelData.address
                 sub: page.stateText(modelData)
                 highlight: modelData.connected
@@ -93,7 +93,7 @@ SetPage {
             SetRow {
                 id: nd
                 required property var modelData
-                icon: page.kind(modelData)
+                icon: Common.btKind(modelData)
                 label: modelData.deviceName || modelData.address
                 sub: page.stateText(modelData)
                 fg: modelData.deviceName ? Theme.text : Theme.textDim

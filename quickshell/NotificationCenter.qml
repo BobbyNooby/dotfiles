@@ -4,7 +4,6 @@
 // "+N more" to open the rest. Muted apps are listed at the bottom to unmute.
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 
 Dropdown {
     id: win

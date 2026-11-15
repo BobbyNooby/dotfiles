@@ -37,14 +37,16 @@ Singleton {
         lockGlow: "strong",
         typeface: "outfit",
         // desktop widgets on/off
-        widgets: { weather: true, system: true, connections: true, shortcuts: true, player: true, lyrics: true }
+        widgets: { weather: true, system: true, connections: true, shortcuts: true, player: true, lyrics: true },
+        // hypridle (hypr/scripts/idle-config turns these into hypridle.conf); seconds, 0 = never
+        idle: { dim: 150, lock: 300, screenOff: 330, suspend: 1800, suspendPluggedIn: true, lockOnSleep: true, lid: "suspend", lidPluggedIn: "suspend" }
     })
     property var base: ({})       // settings.json (from settings.nix)
     property var overrides: ({})  // overrides.json (from the Settings window)
-    // The two merged; `widgets` and `folders` merge key by key
+    // The two merged; `widgets`, `folders` and `idle` merge key by key
     readonly property var data: {
         const d = Object.assign({}, base, overrides);
-        for (const k of ["widgets", "folders"])
+        for (const k of ["widgets", "folders", "idle"])
             if (overrides[k]) d[k] = Object.assign({}, base[k] ?? {}, overrides[k]);
         return d;
     }
@@ -60,13 +62,33 @@ Singleton {
     readonly property string vpnPrefix: get("vpnPrefix") ?? "surfshark"
     readonly property string lockGlow: get("lockGlow") ?? "strong"
     readonly property string typeface: get("typeface") ?? "outfit"    // Theme.qml's pairing
+    readonly property var idle: Object.assign({}, defaults.idle, data.idle ?? {})
+    // One idle setting (kept as a whole `idle` set, like widgets)
+    function setIdle(name, v) {
+        const i = Object.assign({}, baseValue("idle"), overrides.idle ?? {});
+        i[name] = v;
+        set("idle", i);
+    }
+    // hypridle.conf follows the idle settings: rewrite it and restart hypridle when they change
+    // (from this window or a rebuild). Not on startup: hypridle's service does that itself.
+    property string idleSeen: ""
+    onIdleChanged: {
+        const now = JSON.stringify(idle);
+        if (idleSeen !== "" && now !== idleSeen) idleApply.restart();
+        idleSeen = now;
+    }
+    Timer { // wait for the overrides file to be written
+        id: idleApply
+        interval: 400
+        onTriggered: Quickshell.execDetached([root.home + "/.config/hypr/scripts/idle-config"])
+    }
     // Is this desktop widget switched on? (weather, system, connections, shortcuts, player, lyrics)
     function show(name) { return (data.widgets ?? {})[name] ?? defaults.widgets[name] ?? true }
 
     // ---- overrides (the Settings window) ----
     // What settings.nix says for a key (or the default when it doesn't say)
     function baseValue(k) {
-        if (k === "widgets" || k === "folders") return Object.assign({}, defaults[k], base[k] ?? {});
+        if (k === "widgets" || k === "folders" || k === "idle") return Object.assign({}, defaults[k], base[k] ?? {});
         return base[k] ?? defaults[k];
     }
     function same(a, b) { return JSON.stringify(a) === JSON.stringify(b) }

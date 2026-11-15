@@ -70,7 +70,8 @@ Singleton {
         function current(): string { return root.current }
     }
 
-    // fcitx5 can also switch on its own (its own keys, a new window): check every 2 s
+    // fcitx5 can also switch on its own (its own keys, a new window): check every 5 s (our own
+    // switches show at once: set() updates `current` itself)
     Process {
         id: poll
         // (through sh, so a missing fcitx5 before the rebuild is quiet instead of a warning every 2 s)
@@ -83,5 +84,5 @@ Singleton {
             }
         }
     }
-    Timer { interval: 2000; running: true; repeat: true; triggeredOnStart: true; onTriggered: poll.running = true }
+    Timer { interval: 5000; running: true; repeat: true; triggeredOnStart: true; onTriggered: poll.running = true }
 }

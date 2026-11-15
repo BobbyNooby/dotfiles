@@ -6,7 +6,6 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Hyprland
 import Quickshell.Widgets
@@ -205,8 +204,9 @@ PanelWindow {
             // middle-click = close the app (scripts/tray-quit). Drawn in one colour
             // so they follow the wallpaper colours (TrayIcon.qml). The Wi-Fi and Bluetooth applets
             // stay running (they answer password / pairing prompts) but are hidden: the bar has its own.
+            // So is fcitx5's (the keyboard indicator below does its job).
             Repeater {
-                model: SystemTray.items.values.filter(i => !/nm-applet|networkmanager|blueman/i.test(i.id + " " + i.title))
+                model: SystemTray.items.values.filter(i => !/nm-applet|networkmanager|blueman|fcitx/i.test(i.id + " " + i.title))
                 Clicky {
                     id: trayBtn
                     required property var modelData

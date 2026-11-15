@@ -292,26 +292,49 @@ PanelWindow {
     // ---- calculator: the instant JS answer, replaced by qalc's (units, currencies) when it's in ----
     property string qalcFor: ""
     property string qalcAnswer: ""
-    Timer { id: qalcDelay; interval: 120; onTriggered: { qalcProc.command = ["qalc", "-t", "--", win.qalcFor]; qalcProc.running = true } }
+    // One run at a time: typing on while one runs starts the next when it ends (onExited), and
+    // an answer only counts for the sum it was asked (ranFor)
+    Timer {
+        id: qalcDelay
+        interval: 120
+        onTriggered: if (!qalcProc.running) {
+            qalcProc.ranFor = win.qalcFor;
+            qalcProc.command = ["qalc", "-t", "--", win.qalcFor];
+            qalcProc.running = true;
+        }
+    }
     Process {
         id: qalcProc
+        property string ranFor
         stdout: StdioCollector {
             onStreamFinished: {
                 const out = text.trim().split("\n").pop() ?? "";
-                if (win.qalcFor === win.query.trim() && out && !/error|warning/i.test(out)) { win.qalcAnswer = out; win.rebuild() }
+                if (qalcProc.ranFor === win.qalcFor && win.qalcFor === win.query.trim() && out && !/error|warning/i.test(out)) { win.qalcAnswer = out; win.rebuild() }
             }
         }
+        onExited: if (ranFor !== win.qalcFor && win.qalcFor) qalcDelay.restart()
     }
 
     // ---- files (debounced: one fd per pause in typing) ----
     property string filesFor: ""
     property var files: []
-    Timer { id: filesDelay; interval: 160; onTriggered: { filesProc.command = [Quickshell.shellDir + "/scripts/launcher-files", win.filesFor]; filesProc.running = true } }
+    Timer { // one search at a time, like qalc above
+        id: filesDelay
+        interval: 160
+        onTriggered: if (!filesProc.running) {
+            filesProc.ranFor = win.filesFor;
+            filesProc.command = [Quickshell.shellDir + "/scripts/launcher-files", win.filesFor];
+            filesProc.running = true;
+        }
+    }
     Process {
         id: filesProc
+        property string ranFor
+        onExited: if (ranFor !== win.filesFor && win.filesFor) filesDelay.restart()
         stdout: StdioCollector {
             onStreamFinished: {
                 const q = win.filesFor;
+                if (filesProc.ranFor !== q) return; // you typed on meanwhile: the next search is coming
                 const want = q.replace(/^.*\//, "").toLowerCase();
                 win.files = text.split("\n").filter(l => l).map(l => {
                     const [kind, path] = l.split("\t");
@@ -348,10 +371,18 @@ PanelWindow {
         stdout: StdioCollector {
             onStreamFinished: {
                 // emoji <tab> group <tab> subgroup <tab> name <tab> keywords ("a | b | c")
-                win.emojis = text.split("\n").filter(l => l).map(l => {
+                // Most come twice (with and without the emoji presentation selector, U+FE0F):
+                // keep the first of each name, with whichever copy has the keywords
+                const byName = new Map();
+                for (const l of text.split("\n")) {
                     const f = l.split("\t");
-                    return { e: f[0], name: f[3] ?? "", words: (f[4] ?? "").replace(/ \| /g, " "), group: f[1] ?? "" };
-                });
+                    if (!f[0] || !f[3]) continue;
+                    const words = (f[4] ?? "").replace(/ \| /g, " ");
+                    const had = byName.get(f[3]);
+                    if (had) { if (!had.words) had.words = words; continue }
+                    byName.set(f[3], { e: f[0], name: f[3], words, group: f[1] ?? "" });
+                }
+                win.emojis = [...byName.values()];
                 win.rebuild();
             }
         }

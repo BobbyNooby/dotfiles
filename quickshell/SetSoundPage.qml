@@ -6,6 +6,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Pipewire
+import "Common.js" as Common
 
 SetPage {
     id: page
@@ -120,12 +121,12 @@ SetPage {
         }
     }
 
-    // ---- EasyEffects presets (output): the files in its presets folder, as in MusicPanel.qml ----
+    // ---- EasyEffects presets (output): the files in its presets folder (Common.js) ----
     property var presets: []
     property string preset: ""
     Process {
         running: true
-        command: ["sh", "-c", "for d in \"$HOME/.local/share/easyeffects/output\" \"$HOME/.config/easyeffects/output\"; do [ -d \"$d\" ] && ls \"$d\"; done | sed -n 's/\\.json$//p' | sort -u"]
+        command: Common.easyEffectsPresets
         stdout: StdioCollector { onStreamFinished: page.presets = text.split("\n").filter(x => x) }
     }
     SetCard {

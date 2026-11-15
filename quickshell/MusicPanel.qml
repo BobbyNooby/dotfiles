@@ -7,6 +7,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Widgets
 import Quickshell.Services.Pipewire
+import "Common.js" as Common
 
 Dropdown {
     id: win
@@ -26,7 +27,7 @@ Dropdown {
     onOpened: presetList.running = true
     Process {
         id: presetList
-        command: ["sh", "-c", "for d in \"$HOME/.local/share/easyeffects/output\" \"$HOME/.config/easyeffects/output\"; do [ -d \"$d\" ] && ls \"$d\"; done | sed -n 's/\\.json$//p' | sort -u"]
+        command: Common.easyEffectsPresets
         stdout: StdioCollector { onStreamFinished: win.presets = text.split("\n").filter(x => x) }
     }
 

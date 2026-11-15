@@ -61,11 +61,15 @@ Singleton {
         command: ["nmcli", "radio", "wifi"]
         stdout: StdioCollector { onStreamFinished: root.wifiOn = text.trim() === "enabled" }
     }
+    // The first list after opening uses the last scan's results (instant); the next ones let
+    // nmcli rescan when those are old (that takes a few seconds)
+    property bool cachedFirst: false
     Process {
         id: list
-        command: ["nmcli", "-t", "-f", "IN-USE,SIGNAL,SECURITY,SSID", "device", "wifi", "list"]
+        command: ["nmcli", "-t", "-f", "IN-USE,SIGNAL,SECURITY,SSID", "device", "wifi", "list", "--rescan", root.cachedFirst ? "no" : "auto"]
         stdout: StdioCollector {
             onStreamFinished: {
+                root.cachedFirst = false;
                 const seen = {}, out = [];
                 for (const line of text.split("\n")) {
                     const f = line.replace(/\\:/g, "\x1f").split(":");
@@ -76,8 +80,7 @@ Singleton {
                     out.push({ ssid, signal: Number(f[1]) || 0, secure: f[2] !== "" && f[2] !== "--",
                                active: f[0] === "*", saved: root.saved.includes(ssid) });
                 }
-                out.sort((a, b) => (b.active - a.active) || (b.saved - a.saved) || (b.signal - a.signal));
-                root.networks = out;
+                root.networks = root.ranked(out);
                 root.signal = out.find(n => n.active)?.signal ?? root.signal;
             }
         }
@@ -92,16 +95,24 @@ Singleton {
             }
         }
     }
+    // Connected first, then saved, then strongest
+    function ranked(list) {
+        return list.sort((a, b) => (b.active - a.active) || (b.saved - a.saved) || (b.signal - a.signal));
+    }
     Process {
         id: savedProc
         command: ["nmcli", "-t", "-f", "NAME,TYPE", "connection", "show"]
         stdout: StdioCollector {
-            onStreamFinished: root.saved = text.split("\n").filter(l => l.endsWith(":802-11-wireless"))
-                .map(l => l.slice(0, -":802-11-wireless".length).replace(/\\:/g, ":"))
+            onStreamFinished: {
+                root.saved = text.split("\n").filter(l => l.endsWith(":802-11-wireless"))
+                    .map(l => l.slice(0, -":802-11-wireless".length).replace(/\\:/g, ":"));
+                // The scan runs alongside this: mark saved networks again in case it finished first
+                root.networks = root.ranked(root.networks.map(n => Object.assign({}, n, { saved: root.saved.includes(n.ssid) })));
+            }
         }
     }
 
-    onScanningChanged: if (scanning) refresh()
+    onScanningChanged: if (scanning) { cachedFirst = true; refresh() }
     Timer { interval: root.scanning ? 4000 : 5000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
     Timer { id: settle; interval: 1500; onTriggered: root.refresh() } // after a change from here
 }

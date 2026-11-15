@@ -8,6 +8,7 @@
 // Files:
 //   Theme.qml               colours (from matugen's colors.json), fonts, sizes
 //   Icon.qml / Txt.qml / Toggle.qml / Clicky.qml   small building blocks (icons, text, switch, button)
+//   Common.js               helpers several files share (battery time, Bluetooth icon, brightness, EasyEffects)
 //   Bar.qml                 the top bar
 //   DesktopWidgets.qml      clocks + weather, System, Connections, lyrics, music controller
 //   Wallpaper.qml           draws the wallpaper chosen with `setwall`

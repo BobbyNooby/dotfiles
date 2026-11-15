@@ -1,4 +1,6 @@
 quickshell/colors.json
 hypr/colors.lua
+hypr/hyprlock-colors.conf
+hypr/hypridle.conf
 wezterm/colors/
 rofi/colors.rasi

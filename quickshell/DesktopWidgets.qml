@@ -12,6 +12,7 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Services.UPower
+import "Common.js" as Common
 
 PanelWindow {
     id: win
@@ -41,71 +42,69 @@ PanelWindow {
     // ---- battery / power, shared by the System card ----
     readonly property var batt: UPower.displayDevice
     readonly property bool charging: batt?.state === UPowerDeviceState.Charging
-    function hmText(secs) {
-        const m = Math.round(secs / 60);
-        return Math.floor(m / 60) + " h " + (m % 60 < 10 ? "0" : "") + m % 60 + " m";
-    }
     readonly property string battDetail: {
         if (!batt) return "";
         if (batt.state === UPowerDeviceState.FullyCharged) return "Full · plugged in";
-        if (charging) return batt.timeToFull > 0 ? "Charging · full in about " + hmText(batt.timeToFull) : "Charging";
-        return batt.timeToEmpty > 0 ? "On battery · about " + hmText(batt.timeToEmpty) + " left" : "On battery";
+        if (charging) return batt.timeToFull > 0 ? "Charging · full in about " + Common.hm(batt.timeToFull) : "Charging";
+        return batt.timeToEmpty > 0 ? "On battery · about " + Common.hm(batt.timeToEmpty) + " left" : "On battery";
     }
 
-                component Meter: ColumnLayout {
-    id: meter
-                    property string icon
-                    property string label
-                    property string value
-                    property real fraction
-                    Layout.fillWidth: true
-                    spacing: 6
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 10
-                        Icon { name: meter.icon; size: 18; color: Theme.accent }
-                        Txt { Layout.fillWidth: true; text: meter.label; font.pixelSize: 14 }
-                        Txt { text: meter.value; font.pixelSize: 14; font.weight: Font.DemiBold }
-                    }
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 6
-                        radius: 3
-                        color: Theme.bgHighest
-                        Rectangle {
-                            height: parent.height
-                            radius: 3
-                            width: parent.width * Math.max(0, Math.min(1, meter.fraction))
-                            color: meter.fraction > 0.9 ? Theme.danger : Theme.accent
-                            Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
-                        }
-                    }
-                }
+    // A System card line: icon, label, value and a bar
+    component Meter: ColumnLayout {
+        id: meter
+        property string icon
+        property string label
+        property string value
+        property real fraction
+        Layout.fillWidth: true
+        spacing: 6
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 10
+            Icon { name: meter.icon; size: 18; color: Theme.accent }
+            Txt { Layout.fillWidth: true; text: meter.label; font.pixelSize: 14 }
+            Txt { text: meter.value; font.pixelSize: 14; font.weight: Font.DemiBold }
+        }
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 6
+            radius: 3
+            color: Theme.bgHighest
+            Rectangle {
+                height: parent.height
+                radius: 3
+                width: parent.width * Math.max(0, Math.min(1, meter.fraction))
+                color: meter.fraction > 0.9 ? Theme.danger : Theme.accent
+                Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+            }
+        }
+    }
 
-                component VpnTile: Clicky {
-    id: tile
-                    property string icon
-                    property string title
-                    property string status
-                    property bool on
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 1
-                    implicitHeight: 88
-                    radius: Theme.r(22)
-                    base: tile.on ? Theme.accentSoft : Theme.bgHigh
-                    ColumnLayout {
-                        anchors { fill: parent; margins: 12 }
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Icon { name: tile.icon; size: 22; color: tile.on ? Theme.textOnSoft : Theme.text }
-                            Item { Layout.fillWidth: true }
-                            Toggle { on: tile.on; small: true }
-                        }
-                        Item { Layout.fillHeight: true }
-                        Txt { text: tile.title; font.pixelSize: 15; font.weight: Font.DemiBold; color: tile.on ? Theme.textOnSoft : Theme.text }
-                        Txt { Layout.fillWidth: true; text: tile.status; font.pixelSize: 12; opacity: 0.85; elide: Text.ElideRight; color: tile.on ? Theme.textOnSoft : Theme.text }
-                    }
-                }
+    // A Connections switch tile (Tailscale, Surfshark)
+    component VpnTile: Clicky {
+        id: tile
+        property string icon
+        property string title
+        property string status
+        property bool on
+        Layout.fillWidth: true
+        Layout.preferredWidth: 1
+        implicitHeight: 88
+        radius: Theme.r(22)
+        base: tile.on ? Theme.accentSoft : Theme.bgHigh
+        ColumnLayout {
+            anchors { fill: parent; margins: 12 }
+            RowLayout {
+                Layout.fillWidth: true
+                Icon { name: tile.icon; size: 22; color: tile.on ? Theme.textOnSoft : Theme.text }
+                Item { Layout.fillWidth: true }
+                Toggle { on: tile.on; small: true }
+            }
+            Item { Layout.fillHeight: true }
+            Txt { text: tile.title; font.pixelSize: 15; font.weight: Font.DemiBold; color: tile.on ? Theme.textOnSoft : Theme.text }
+            Txt { Layout.fillWidth: true; text: tile.status; font.pixelSize: 12; opacity: 0.85; elide: Text.ElideRight; color: tile.on ? Theme.textOnSoft : Theme.text }
+        }
+    }
 
     // A frosted card on the desktop
     component Card: Rectangle {
@@ -462,7 +461,6 @@ PanelWindow {
                 width: parent.width - 28
                 spacing: 12
 
-
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 10
@@ -699,5 +697,4 @@ PanelWindow {
             }
         }
     }
-
 }

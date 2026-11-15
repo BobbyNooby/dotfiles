@@ -12,7 +12,7 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
 | Folder | What |
 |---|---|
 | `quickshell/` | the whole shell; `shell.qml` lists every file and what it does |
-| `hypr/` | Hyprland (**Lua config, Hyprland 0.57+**), hypridle, hyprlock |
+| `hypr/` | Hyprland (**Lua config, Hyprland 0.57+**), hyprlock, and scripts: `lock` (the lock screen, hyprlock as fallback) and `idle-config` (writes hypridle's config from the idle settings) |
 | `matugen/` | templates that recolour the shell, Hyprland, WezTerm, rofi and GTK from the wallpaper |
 | `rofi/` | a "Spotlight"-style launcher with mode tabs |
 | `wezterm/`, `starship/` | terminal and prompt |
@@ -76,7 +76,12 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
    change it. It sets:
    - your cities (one or two), picture folders, and where screenshots go;
    - your GPU's PCI address (for the asleep/awake row; `""` hides it);
-   - the VPN connection prefix, the lock screen glow, and which widgets show.
+   - the VPN connection prefix, the lock screen glow, and which widgets show;
+   - the idle times (dim, lock, screen off, sleep), also changeable in Settings → Power.
+
+   Then run `~/.config/hypr/scripts/idle-config`: it writes `hypr/hypridle.conf` (not in the repo)
+   and restarts hypridle. To keep it fresh, run it before hypridle starts, e.g. a systemd drop-in
+   for hypridle.service with `ExecStartPre=-%h/.config/hypr/scripts/idle-config --no-restart`.
 
    Without the file you get sensible defaults.
 5. **Colours:** run `setwall /path/to/a/picture` once. It makes the colour files (they aren't in

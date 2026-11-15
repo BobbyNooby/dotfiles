@@ -22,10 +22,14 @@ Item {
         : /telegram/.test(key) ? "telegram-panel" : /spotify/.test(key) ? "spotify-indicator"
         : /steam/.test(key) ? "steam_tray_mono" : ""
 
+    // A theme icon no installed theme has (fcitx5's "input-keyboard-symbolic") loads as a blank
+    // square, which the mask below turns into a solid block: draw a plain window icon instead
+    readonly property string iconName: { const m = String(item?.icon ?? "").match(/^image:\/\/icon\/([^?]+)/); return m ? m[1] : "" }
+    readonly property bool missing: lineIcon === "" && themed === "" && iconName !== "" && !Quickshell.hasThemeIcon(iconName)
     Icon {
-        visible: root.lineIcon !== ""
+        visible: root.lineIcon !== "" || root.missing
         anchors.centerIn: parent
-        name: root.lineIcon
+        name: root.lineIcon || "window"
         size: root.size
         stroke: 2
         color: root.color
@@ -42,7 +46,7 @@ Item {
         layer.enabled: true
     }
     Rectangle {
-        visible: root.lineIcon === ""
+        visible: root.lineIcon === "" && !root.missing
         anchors.fill: parent
         color: root.color
         layer.enabled: true

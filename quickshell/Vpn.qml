@@ -83,6 +83,8 @@ Singleton {
         }
         onExited: { root.tsBusy = false; tsStatusProc.running = true }
     }
+    // `tailscale login` waits until you sign in: give up after 5 min so the switch works again
+    Timer { interval: 300000; running: login.running; onTriggered: login.running = false }
 
     // ---- Surfshark (WireGuard in NetworkManager) ----
     // One connection per location, named "surfshark-<location>" by scripts/surfshark-import.

@@ -11,6 +11,7 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
+import "Common.js" as Common
 
 PanelWindow {
     id: win
@@ -62,8 +63,8 @@ PanelWindow {
         command: ["brightnessctl", "-m"] // e.g. amdgpu_bl2,backlight,45875,70%,65535
         stdout: StdioCollector {
             onStreamFinished: {
-                const f = text.trim().split(",");
-                if (f.length >= 5) win.show("brightness", Number(f[2]) / Number(f[4]));
+                const b = Common.brightness(text);
+                if (b >= 0) win.show("brightness", b);
             }
         }
     }

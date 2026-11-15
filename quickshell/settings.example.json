@@ -14,5 +14,6 @@
   "vpnPrefix": "surfshark",
   "lockGlow": "strong",
   "typeface": "outfit",
-  "widgets": { "weather": true, "system": true, "connections": true, "shortcuts": true, "player": true, "lyrics": true }
+  "widgets": { "weather": true, "system": true, "connections": true, "shortcuts": true, "player": true, "lyrics": true },
+  "idle": { "dim": 150, "lock": 300, "screenOff": 330, "suspend": 1800, "suspendPluggedIn": true, "lockOnSleep": true, "lid": "suspend", "lidPluggedIn": "suspend" }
 }
