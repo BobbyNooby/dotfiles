@@ -49,8 +49,9 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
   - Alt+Tab window switcher.
 - **Side panel (Super+A):** chats with [Hermes](https://github.com/NousResearch/hermes-agent) and
   Claude Code, with `/sessions` and `/new`, streaming, and Undo for file edits.
-- **Lock screen:** an Evangelion-inspired "signal board", unlocked through PAM. There's a test
-  key in `hypr/hyprland.lua`; hyprlock is still the default lock.
+- **Lock screen:** an Evangelion-inspired "signal board", unlocked through PAM. Super+Escape,
+  idle and sleep lock with it through `hypr/scripts/lock`, which falls back to hyprlock if the
+  shell can't lock.
 - **Wallpaper transition:** the new picture's outlines are drawn in, then its colours fill in
   (`quickshell/shaders/sketch.frag`).
 

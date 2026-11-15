@@ -20,7 +20,15 @@ Scope {
     property string pending: ""     // the password, kept only until PAM asks for it
     property bool caps: false
 
-    function lock() { if (!session.locked) { reset(); session.locked = true } }
+    // `locked` is what we asked for; `secure` is the compositor confirming the screen is covered.
+    // If a lock was refused (e.g. hyprlock already held the screen), `locked` stays true while
+    // nothing shows: drop it and ask again.
+    function lock() {
+        if (session.locked && session.secure) return;
+        if (session.locked) session.locked = false;
+        reset();
+        session.locked = true;
+    }
     function reset() { phase = "idle"; message = ""; pending = "" }
 
     function submit(password) {
@@ -97,6 +105,7 @@ Scope {
     IpcHandler {
         target: "lock"
         function lock(): void { root.lock() }
-        function status(): string { return session.locked ? "locked" : "unlocked" }
+        // "locked" only once the compositor confirms it (scripts/lock relies on this)
+        function status(): string { return session.secure ? "locked" : session.locked ? "pending" : "unlocked" }
     }
 }

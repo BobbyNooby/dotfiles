@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Lock the screen: the Eva lock (Quickshell, dotfiles/quickshell/LockScreen.qml), or hyprlock if
+# that doesn't work. Used by hypridle (idle, lid/sleep) and Super+Escape.
+#
+# Falls back to hyprlock when the shell isn't running, `qs ipc` hangs (e.g. two shells), or the
+# Eva lock hasn't taken the screen within ~2 s, so the screen is never left unlocked.
+
+# Already locked (by either)? Nothing to do.
+pidof hyprlock >/dev/null && exit 0
+[ "$(timeout 2 qs ipc call lock status 2>/dev/null)" = "locked" ] && exit 0
+
+if timeout 3 qs ipc call lock lock >/dev/null 2>&1; then
+    for _ in 1 2 3 4 5 6 7 8; do
+        [ "$(timeout 1 qs ipc call lock status 2>/dev/null)" = "locked" ] && exit 0
+        sleep 0.25
+    done
+fi
+
+exec hyprlock

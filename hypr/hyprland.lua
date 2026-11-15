@@ -153,8 +153,8 @@ hl.config({
     misc = {
         force_default_wallpaper = 0,     -- Quickshell draws the wallpaper
         disable_hyprland_logo   = true,
-        -- If the lock screen crashes while locked, a new one may take over (recovery: from a
-        -- text console, `hyprctl --instance 0 dispatch 'hl.dsp.exec_cmd("hyprlock")'`)
+        -- If the lock screen (Quickshell) crashes while locked, a new one may take over
+        -- (recovery: from a text console (Ctrl+Alt+F3), `hyprctl --instance 0 dispatch 'hl.dsp.exec_cmd("hyprlock")'`)
         allow_session_lock_restore = true,
     },
 })
@@ -196,10 +196,10 @@ hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + Space",  hl.dsp.exec_cmd(launcher))
 hl.bind(mainMod .. " + SHIFT + Space", hl.dsp.exec_cmd(menu)) -- rofi, if the shell is broken
 hl.bind(mainMod .. " + E",      hl.dsp.exec_cmd(fileManager))
-hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("hyprlock"))
--- TESTING the new Eva lock screen (dotfiles/quickshell/LockScreen.qml). hyprlock stays on
--- Super+Escape and in hypridle until the new one is confirmed to unlock properly.
-hl.bind(mainMod .. " + CTRL + Escape", hl.dsp.exec_cmd("qs ipc call lock lock"))
+-- Lock: the Eva lock screen (dotfiles/quickshell/LockScreen.qml), falling back to hyprlock if
+-- the shell can't lock (scripts/lock). Super+Ctrl+Escape = plain hyprlock, just in case.
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("loginctl lock-session"))
+hl.bind(mainMod .. " + CTRL + Escape", hl.dsp.exec_cmd("hyprlock"))
 
 -- Windows
 hl.bind(mainMod .. " + Q", hl.dsp.window.close())
