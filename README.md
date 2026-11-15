@@ -34,7 +34,7 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
 - **Popups:**
   - player (cava visualiser, wavy seek bar, EasyEffects presets);
   - Wi-Fi, Bluetooth, volume, battery;
-  - notifications with Do not disturb;
+  - notifications grouped by app, with Do not disturb and per-app mute;
   - Quick settings.
 - **Overlays:**
   - wallpaper switcher (Super+W): folders as tabs, Now vs New with the colours each would give, a tilting carousel;

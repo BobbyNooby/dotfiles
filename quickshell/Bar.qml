@@ -32,13 +32,20 @@ PanelWindow {
     // App id → the little icon drawn on its workspace
     function kindOf(app) {
         app = (app ?? "").toLowerCase();
-        if (/wezterm|kitty|alacritty|foot|terminal/.test(app)) return "term";
-        if (/edge|firefox|chrom|brave|zen/.test(app)) return "web";
-        if (/zed|code|codium|nvim|jetbrains|idea/.test(app)) return "code";
-        if (/spotify|music|vlc|mpv/.test(app)) return "music";
-        if (/discord|vesktop|telegram|slack|whatsapp|signal/.test(app)) return "chat";
-        if (/nautilus|thunar|dolphin|files/.test(app)) return "folder";
-        if (/obsidian/.test(app)) return "notes";
+        const is = re => re.test(app);
+        if (is(/wezterm|kitty|alacritty|foot|ghostty|konsole|terminal/)) return "term";
+        if (is(/edge|firefox|chrom|brave|zen|librewolf|vivaldi/)) return "web";
+        if (is(/zed|code|codium|cursor|nvim|neovide|jetbrains|idea|android-studio/)) return "code";
+        if (is(/spoti|music|vlc|mpv|rhythmbox|feishin|tidal|youtube-music|strawberry|soloist/)) return "music";
+        if (is(/discord|vesktop|telegram|slack|whatsapp|signal|element|teams|thunderbird|outlook/)) return "chat";
+        if (is(/nautilus|thunar|dolphin|nemo|files/)) return "folder";
+        if (is(/obsidian|logseq|notion|joplin/)) return "notes";
+        if (is(/surfshark|vpn|proton/)) return "shield";
+        if (is(/pavucontrol|easyeffects|helvum|qpwgraph/)) return "volume";
+        if (is(/blueman|bluetooth|overskride/)) return "bluetooth";
+        if (is(/settings|nm-connection|control-center|nwg-look|qt6ct|qt5ct/)) return "gear";
+        if (is(/btop|htop|monitor|resources/)) return "cpu";
+        if (is(/loupe|eog|imv|feh|gimp|krita|inkscape|image/)) return "image";
         return "window";
     }
     readonly property var appsByWs: {

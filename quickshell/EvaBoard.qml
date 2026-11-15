@@ -128,7 +128,7 @@ Item {
 
         Canvas { // 7-segment clock: HH MM SS, slanted, unlit segments faintly visible
             id: seven
-            x: 40; y: 92; width: 400; height: 90
+            x: 26; y: 92; width: 440; height: 90 // 14 px to the left: the slant reaches past the first digit's box
             property string digits: { const d = clock.date; return board.pad(d.getHours()) + board.pad(d.getMinutes()) + board.pad(d.getSeconds()) }
             onDigitsChanged: requestPaint()
             onPaint: {
@@ -145,7 +145,7 @@ Item {
                 for (let i = 0; i < 6; i++) {
                     const n = Number(digits[i] ?? 0);
                     ctx.save();
-                    ctx.translate(xs[i], 0);
+                    ctx.translate(xs[i] + 14, 0);
                     ctx.transform(1, 0, Math.tan(-8 * Math.PI / 180), 1, 0, 0); // skewX(-8°)
                     for (const k of "abcdefg") {
                         const p = SEG[k];
@@ -159,7 +159,7 @@ Item {
                     ctx.restore();
                 }
                 ctx.fillStyle = on; // the colons
-                for (const [x, y] of [[116, 24], [112, 56], [252, 24], [248, 56]]) ctx.fillRect(x, y, 9, 9);
+                for (const [x, y] of [[116, 24], [112, 56], [252, 24], [248, 56]]) ctx.fillRect(x + 14, y, 9, 9);
             }
             layer.enabled: EvaStyle.halo > 0
             layer.effect: MultiEffect { shadowEnabled: true; shadowColor: EvaStyle.orange; shadowBlur: 0.55 * EvaStyle.halo; shadowOpacity: 0.85; shadowHorizontalOffset: 0; shadowVerticalOffset: 0 }

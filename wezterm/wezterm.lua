@@ -40,4 +40,10 @@ config.use_fancy_tab_bar = false
 
 -- Splits and sessions: use tmux (prefix Ctrl+A).
 
+-- Shift+Insert pastes the clipboard (WezTerm's default is the primary selection), so it pastes
+-- the same thing as in every other app, including dictation (Voxtype pastes with Shift+Insert).
+config.keys = {
+  { key = "Insert", mods = "SHIFT", action = wezterm.action.PasteFrom("Clipboard") },
+}
+
 return config

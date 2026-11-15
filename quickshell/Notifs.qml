@@ -6,6 +6,11 @@
 //   qs ipc call notifs toggleCenter    open/close the list
 //   qs ipc call notifs clear           dismiss everything
 //   qs ipc call notifs list            what's in the list
+//   qs ipc call notifs mute <app>      no popups from that app (still listed); again = unmute
+//   qs ipc call notifs muted           which apps are muted
+//
+// Muted apps and Do not disturb are kept in ~/.local/state/quickshell/.../notifs.json, so they
+// survive restarts.
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -16,6 +21,8 @@ Singleton {
     id: root
 
     property bool dnd: false          // do not disturb: no popups (they still land in the list)
+    property var muted: []            // app names whose notifications never pop up
+    onDndChanged: save()
     readonly property bool centerOpen: Popups.open === "notifs"
     property var popups: []           // notifications currently shown as popups
 
@@ -36,6 +43,48 @@ Singleton {
         const m = Math.floor((Date.now() - t) / 60000);
         return m < 1 ? "now" : m < 60 ? m + " min" : m < 1440 ? Math.floor(m / 60) + " h" : Math.floor(m / 1440) + " d";
     }
+
+    // The list grouped by app, newest app first: [{ app, items (newest first) }]
+    readonly property var groups: {
+        const map = new Map();
+        for (const n of all.slice().reverse()) {
+            const a = n.appName || "Other";
+            if (!map.has(a)) map.set(a, []);
+            map.get(a).push(n);
+        }
+        return [...map].map(([app, items]) => ({ app, items }));
+    }
+
+    function isMuted(app) { return muted.includes(app) }
+    function toggleMute(app) {
+        muted = isMuted(app) ? muted.filter(a => a !== app) : [...muted, app];
+        if (isMuted(app)) popups = popups.filter(p => p.appName !== app);
+        save();
+    }
+    function clearApp(app) {
+        for (const n of all.filter(n => (n.appName || "Other") === app)) n.dismiss();
+    }
+
+    // Saved settings (muted apps, Do not disturb)
+    property bool loaded: false
+    function save() { if (loaded) store.setText(JSON.stringify({ dnd, muted }, null, 2)) }
+    FileView {
+        id: store
+        path: Quickshell.statePath("notifs.json")
+        printErrors: false
+        blockLoading: true
+        function apply() {
+            try {
+                const d = JSON.parse(text() || "{}");
+                root.dnd = !!d.dnd;
+                root.muted = Array.isArray(d.muted) ? d.muted : [];
+            } catch (e) {}
+            root.loaded = true;
+        }
+        onLoaded: apply()
+        onLoadFailed: root.loaded = true // first run: no file yet
+    }
+    Component.onCompleted: store.apply()
 
     function dismissPopup(n) { popups = popups.filter(p => p !== n) }
     function clear() {
@@ -58,7 +107,8 @@ Singleton {
             root.times[n.id] = Date.now();
             if (!root.centerOpen) root.unread++;
             n.closed.connect(() => root.dismissPopup(n)); // closed by the app or dismissed
-            if (!root.dnd || n.urgency === NotificationUrgency.Critical)
+            const quiet = root.dnd || root.isMuted(n.appName || "Other");
+            if (!quiet || n.urgency === NotificationUrgency.Critical)
                 root.popups = [...root.popups, n];
         }
     }
@@ -70,5 +120,7 @@ Singleton {
         function clear(): void { root.clear() }
         // what's in the list, one per line: "app | title" (for checking from a terminal)
         function list(): string { return root.all.map(n => n.appName + " | " + n.summary).join("\n") }
+        function mute(app: string): void { root.toggleMute(app) }
+        function muted(): string { return root.muted.join("\n") }
     }
 }
