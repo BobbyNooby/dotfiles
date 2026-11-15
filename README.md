@@ -19,6 +19,7 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
 | `aliases/` | zsh aliases and functions (loaded from `~/aliases`) |
 | `waybar/`, `mako/` | an old fallback bar and notifications (not used by default) |
 | `bin/setwall` | sets the wallpaper and recolours everything |
+| `sddm-eva/` | an optional SDDM login screen matching the lock screen, and its status script |
 
 ### The shell
 - **Bar:** workspaces with app icons, now playing, RAM, keyboard layout, volume, Wi-Fi,
@@ -76,6 +77,21 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
 6. **Start:** log into Hyprland; `hypr/hyprland.lua` starts Quickshell (`qs -n -d`).
    - Restart the shell: Super+Shift+B.
    - Logs: `qs log`.
+
+## Login screen (optional)
+
+`sddm-eva/` is an SDDM theme (Qt 6) with the same "signal board" look as the lock screen. SDDM
+can't read your home folder or run commands, so `sddm-eva/greeter-status` (run as root by a
+timer) writes `/run/greeter-status.json` (battery, Tailscale device names and online state,
+weather, meters) and copies `~/.face.icon` to `/run/greeter-face`.
+
+1. Copy `sddm-eva/` to `/usr/share/sddm/themes/eva` and set `Current=eva` under `[Theme]` in
+   your SDDM config. Add `GreeterEnvironment=QML_XHR_ALLOW_FILE_READ=1` under `[General]`.
+2. Put your cities and GPU in `/etc/greeter/settings.json` (same keys as
+   `quickshell/settings.example.json`), and run `greeter-status /etc/greeter/settings.json <you>`
+   every minute as root (needs jq, curl, NetworkManager, tailscale).
+3. Try it first without logging out: `sddm-greeter-qt6 --test-mode --theme /usr/share/sddm/themes/eva`.
+   Glow: `glow=strong|soft|off` in `theme.conf`.
 
 ## Keys
 

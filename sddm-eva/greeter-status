@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+# Writes the login screen's status file (and a copy of your picture), for the Eva SDDM theme.
+# SDDM runs before you log in, so it can't read your home folder or run commands: this does it
+# instead, as root, every minute (a systemd timer: modules/login-screen.nix on NixOS).
+#   greeter-status <settings.json> <user>
+# settings.json is the desktop settings file (cities, gpu: see settings.example.json).
+# Writes /run/greeter-status.json (names and numbers only: battery, Tailscale device names and
+# online state, weather, meters, NixOS generation) and /run/greeter-face (~user/.face.icon).
+set -euo pipefail
+settings=${1:-/etc/greeter/settings.json}
+user=${2:-}
+out=/run/greeter-status.json
+tmp=$(mktemp /run/greeter-status.XXXXXX)
+trap 'rm -f "$tmp"' EXIT
+
+cities=$(jq -c '.cities // [] | .[0:2]' "$settings" 2>/dev/null || echo '[]')
+gpu=$(jq -r '.gpu // ""' "$settings" 2>/dev/null || echo "")
+
+# battery (the first one the kernel lists)
+bat=$(find /sys/class/power_supply -maxdepth 1 -name 'BAT*' | head -1)
+capacity=null
+batstate='""'
+if [ -n "$bat" ]; then
+  capacity=$(cat "$bat/capacity" 2>/dev/null || echo null)
+  batstate=$(jq -Rn --arg s "$(cat "$bat/status" 2>/dev/null)" '$s')
+fi
+
+# Tailscale: device names and whether they're online (no keys, no addresses), online first
+tailnet=$(timeout 5 tailscale status --json 2>/dev/null | jq -c '{
+  state: .BackendState,
+  peers: ([ (.Peer // {})[] | { name: (.HostName // .DNSName), online: (.Online == true), direct: ((.CurAddr // "") != "") } ]
+          | sort_by((if .online then 0 else 1 end), .name))
+}' 2>/dev/null || echo '{"state":"","peers":[]}')
+
+# weather for each city (Open-Meteo, no key); keeps the last good copy when offline
+weather='{}'
+while IFS=$'\t' read -r id lat lon tz; do
+  [ -n "$id" ] || continue
+  w=$(curl -sf --max-time 15 "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&hourly=temperature_2m,precipitation_probability,weather_code,is_day&timezone=$tz&forecast_days=2" || true)
+  if [ -n "$w" ]; then
+    weather=$(jq -c --arg id "$id" --argjson w "$w" '. + {($id): $w}' <<<"$weather")
+  elif [ -f "$out" ]; then
+    weather=$(jq -c --arg id "$id" --slurpfile old "$out" '. + {($id): ($old[0].weather[$id] // null)}' <<<"$weather")
+  fi
+done < <(jq -r '.[] | [.id, .lat, .lon, .tz] | @tsv' <<<"$cities")
+
+gen=$(readlink /nix/var/nix/profiles/system 2>/dev/null | sed -n 's/^system-\([0-9]*\)-link$/\1/p' || true)
+
+# meters: CPU temperature (k10temp, else the first sensor), memory, Wi-Fi signal, GPU sleep
+temp=null
+for d in /sys/class/hwmon/hwmon*; do
+  name=$(cat "$d/name" 2>/dev/null || true)
+  if [ "$name" = k10temp ] || [ "$name" = coretemp ] || [ "$temp" = null ]; then
+    [ -r "$d/temp1_input" ] && temp=$(( $(cat "$d/temp1_input") / 1000 ))
+    { [ "$name" = k10temp ] || [ "$name" = coretemp ]; } && break
+  fi
+done
+memtotal=$(awk '/^MemTotal:/ {print $2}' /proc/meminfo)
+memavail=$(awk '/^MemAvailable:/ {print $2}' /proc/meminfo)
+wifi=$(nmcli -t -f IN-USE,SIGNAL device wifi list --rescan no 2>/dev/null | sed -n 's/^\*:\([0-9]*\)$/\1/p' | head -1 || true)
+gpustate='""'
+if [ -n "$gpu" ]; then
+  gpustate=$(jq -Rn --arg s "$(cat "/sys/bus/pci/devices/$gpu/power/runtime_status" 2>/dev/null)" '$s')
+fi
+
+jq -n \
+  --argjson capacity "$capacity" --argjson batstate "$batstate" \
+  --argjson tailnet "$tailnet" --argjson weather "$weather" --argjson cities "$cities" \
+  --arg host "$(cat /etc/hostname 2>/dev/null || hostname)" --arg gen "$gen" --arg at "$(date +%s)" \
+  --argjson temp "$temp" --argjson memtotal "${memtotal:-0}" --argjson memavail "${memavail:-0}" \
+  --argjson wifi "${wifi:-null}" --argjson gpustate "$gpustate" \
+  '{ battery: { capacity: $capacity, status: $batstate }, tailnet: $tailnet, weather: $weather,
+     system: { temp: $temp, memTotalKb: $memtotal, memAvailKb: $memavail, wifi: $wifi, gpu: $gpustate },
+     cities: $cities, host: $host, generation: $gen, updated: ($at | tonumber) }' > "$tmp"
+chmod 644 "$tmp"
+mv "$tmp" "$out"
+trap - EXIT
+
+# your picture, where the greeter can read it (home folders are private)
+if [ -n "$user" ]; then
+  face="$(getent passwd "$user" | cut -d: -f6)/.face.icon"
+  [ -f "$face" ] && install -m 644 "$face" /run/greeter-face
+fi

@@ -79,6 +79,7 @@ textbox-search {
 }
 entry {
   font: "Inter Medium 15";
+  text-color: @fg; /* what you type (rofi's own default here is near-black) */
   placeholder: "Search";
   placeholder-color: @fg-dim;
   cursor-color: @accent;

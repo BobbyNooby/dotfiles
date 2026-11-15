@@ -15,6 +15,8 @@ Singleton {
     property real mem: 0          // 0..1
     property real memUsedGb: 0
     property real memTotalGb: 0
+    property real swapUsedGb: 0
+    property real swapTotalGb: 0
     property real uptime: 0       // seconds
     property bool gpuAsleep: true
     property bool hasGpu: false
@@ -68,6 +70,9 @@ Singleton {
                 root.memUsedGb = (total - avail) / 1048576;
                 root.memTotalGb = total / 1048576;
             }
+            const st = kb("SwapTotal"), sf = kb("SwapFree");
+            root.swapTotalGb = st / 1048576;
+            root.swapUsedGb = (st - sf) / 1048576;
         }
     }
 

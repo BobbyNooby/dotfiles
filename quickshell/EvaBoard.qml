@@ -57,7 +57,7 @@ Item {
     readonly property string user: (Quickshell.env("USER") || "user").toUpperCase()
     property string host: ""
     property string generation: ""
-    Process { running: true; command: ["hostname"]; stdout: StdioCollector { onStreamFinished: board.host = text.trim().toUpperCase() } }
+    FileView { path: "/etc/hostname"; watchChanges: true; onFileChanged: reload(); printErrors: false; onLoaded: board.host = text().trim().toUpperCase() } // configured name
     Process { // the NixOS generation in use: /nix/var/nix/profiles/system → system-142-link
         running: true
         command: ["readlink", "/nix/var/nix/profiles/system"]

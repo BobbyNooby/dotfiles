@@ -12,10 +12,11 @@
 //   DesktopWidgets.qml      clocks + weather, System, Connections, lyrics, music controller
 //   Wallpaper.qml           draws the wallpaper chosen with `setwall`
 //   Popups.qml              which dropdown is open; Dropdown.qml is the base they share:
-//     AccountPanel.qml (your picture; Avatar.qml draws it) MusicPanel.qml WifiPanel.qml BluetoothPanel.qml VolumePanel.qml BatteryPanel.qml NotificationCenter.qml
+//     AccountPanel.qml (your picture; Avatar.qml draws it) MemoryPanel.qml (what uses the RAM) MusicPanel.qml WifiPanel.qml BluetoothPanel.qml VolumePanel.qml BatteryPanel.qml NotificationCenter.qml
 //   HermesPanel.qml         Super+A side panel (chat in Hermes.qml, scripts/ask)
 //   WallpaperPicker.qml     Super+W: tabs, Now vs New with their colours, a tilting carousel
 //   AvatarPicker.qml        account picture grid (ImageList.qml finds images, WallColors.qml previews colours)
+//   LevelOsd.qml            volume / brightness indicator (`qs ipc call osd brightness`)
 //   LockScreen.qml          the Eva 7 lock screen (EvaBoard.qml draws it, EvaStyle.qml + EvaTag.qml its look)
 //                           `qs ipc call lock lock`; unlocks through PAM
 //   Switcher.qml            Alt+Tab window switcher (hold Alt, Tab to step, let go to switch)
@@ -47,6 +48,7 @@ ShellRoot {
     }
 
     AccountPanel {}
+    MemoryPanel {}
     MusicPanel {}
     WifiPanel {}
     BluetoothPanel {}
@@ -60,5 +62,6 @@ ShellRoot {
     AvatarPicker {}
     Switcher {}
     LockScreen {}
+    LevelOsd {}
     ControlCenter {}
 }

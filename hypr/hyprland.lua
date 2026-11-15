@@ -276,11 +276,13 @@ hl.bind(mainMod .. " + A",         hl.dsp.exec_cmd("qs ipc call hermes toggle"))
 hl.bind(mainMod .. " + slash",     hl.dsp.exec_cmd("qs ipc call cheatsheet toggle")) -- keys + aliases cheat sheet
 hl.bind(mainMod .. " + W",         hl.dsp.exec_cmd("qs ipc call wallpicker toggle")) -- wallpaper switcher (WallpaperPicker.qml); `setwall` alone is the rofi fallback
 
--- Dictation (Voxtype, if installed): hold Super+Z and speak, let go to type the text at the
--- cursor. Super+Shift+Z throws the recording away. (Super+V = float, Super+Escape = lock: taken.)
-hl.bind(mainMod .. " + Z",         hl.dsp.exec_cmd("voxtype record start"))
-hl.bind(mainMod .. " + Z",         hl.dsp.exec_cmd("voxtype record stop"), { release = true })
-hl.bind(mainMod .. " + SHIFT + Z", hl.dsp.exec_cmd("voxtype record cancel"))
+-- Dictation (Voxtype, if installed): hold AltGr (Right Alt on the US layout) and speak, let
+-- go to type the text at the cursor. AltGr+Escape throws the recording away. The release bind
+-- is "ALT + ALT_R" because Right Alt is itself the held modifier when it comes back up (same
+-- trick as the Alt+Tab switcher's commit).
+hl.bind("ALT_R",          hl.dsp.exec_cmd("voxtype record start"))
+hl.bind("ALT + ALT_R",    hl.dsp.exec_cmd("voxtype record stop"), { release = true })
+hl.bind("ALT + Escape",   hl.dsp.exec_cmd("voxtype record cancel"))
 
 -- More rofi menus: emoji, calculator, power menu
 hl.bind(mainMod .. " + period",         hl.dsp.exec_cmd("rofi -show emoji"))
@@ -293,8 +295,8 @@ hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume -l 1 @DEFAULT_
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"),      { locked = true, repeating = true })
 hl.bind("XF86AudioMute",        hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"),     { locked = true, repeating = true })
 hl.bind("XF86AudioMicMute",     hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"),   { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessUp",  hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+"),                  { locked = true, repeating = true })
-hl.bind("XF86MonBrightnessDown",hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%-"),                  { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%+ && qs ipc call osd brightness"),                  { locked = true, repeating = true })
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl -e4 -n2 set 5%- && qs ipc call osd brightness"),                  { locked = true, repeating = true })
 hl.bind("XF86AudioNext",  hl.dsp.exec_cmd("playerctl -p spotify,%any next"),       { locked = true })
 hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl -p spotify,%any play-pause"), { locked = true })
 hl.bind("XF86AudioPlay",  hl.dsp.exec_cmd("playerctl -p spotify,%any play-pause"), { locked = true })

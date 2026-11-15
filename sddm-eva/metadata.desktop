@@ -1,0 +1,8 @@
+[SddmGreeterTheme]
+Name=Eva
+Description=Eva 7 "Signal board": matches the Quickshell lock screen
+Type=sddm-theme
+Version=1
+MainScript=Main.qml
+ConfigFile=theme.conf
+QtVersion=6

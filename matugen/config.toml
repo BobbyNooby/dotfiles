@@ -13,6 +13,11 @@ prefer = "saturation"
 input_path = "~/.config/matugen/templates/quickshell.json"
 output_path = "~/.config/quickshell/colors.json"
 
+# hyprlock (the lock screen): sourced by hypr/hyprlock.conf, read each time it locks
+[templates.hyprlock]
+input_path = "~/.config/matugen/templates/hyprlock.conf"
+output_path = "~/.config/hypr/hyprlock-colors.conf"
+
 # Hyprland window borders (loaded by hyprland.lua; setwall runs `hyprctl reload`)
 [templates.hyprland]
 input_path = "~/.config/matugen/templates/hyprland.lua"

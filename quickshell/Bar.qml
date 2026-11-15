@@ -244,13 +244,20 @@ PanelWindow {
                 }
             }
 
-            // RAM in use (the System card on the desktop has the details)
-            RowLayout {
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
-                spacing: 6
-                Icon { name: "ram"; size: 16; color: Theme.textDim }
-                Txt { text: "RAM " + Math.round(Stats.mem * 100) + "%"; font.pixelSize: 12; font.weight: Font.DemiBold }
+            // RAM in use: click for what's using it (MemoryPanel.qml)
+            Clicky {
+                id: ramBtn
+                implicitWidth: ramRow.implicitWidth + 16
+                implicitHeight: 32
+                base: Popups.open === "memory" ? Theme.bgHighest : "transparent"
+                onClicked: Popups.toggle("memory", bar.centreOf(ramBtn))
+                RowLayout {
+                    id: ramRow
+                    anchors.centerIn: parent
+                    spacing: 6
+                    Icon { name: "ram"; size: 16; color: Theme.textDim }
+                    Txt { text: "RAM " + Math.round(Stats.mem * 100) + "%"; font.pixelSize: 12; font.weight: Font.DemiBold; color: Stats.mem > 0.9 ? Theme.danger : Theme.text }
+                }
             }
 
             // Keyboard language: click = next layout

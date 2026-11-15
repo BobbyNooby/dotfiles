@@ -17,7 +17,9 @@ Dropdown {
     property string host: ""
     property string confirm: "" // "reboot" or "poweroff" after the first click
     onShownChanged: confirm = ""
-    Process { running: true; command: ["hostname"]; stdout: StdioCollector { onStreamFinished: win.host = text.trim() } }
+    // The machine's name as configured (/etc/hostname): right after a rename, before the reboot
+    // that makes it the live hostname
+    FileView { path: "/etc/hostname"; watchChanges: true; onFileChanged: reload(); printErrors: false; onLoaded: win.host = text().trim() }
 
     function run(cmd) { Popups.close(); Quickshell.execDetached(["sh", "-c", cmd]) }
 
