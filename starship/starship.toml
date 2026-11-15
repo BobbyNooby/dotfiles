@@ -1,4 +1,4 @@
-# Two-line prompt, as on the Mac:
+# Two-line prompt:
 #   line 1: folder + git branch/status ........ how long the last command took (if ≥ 500 ms) + time
 #   line 2: ❯ (green after success, red after an error)
 add_newline = true

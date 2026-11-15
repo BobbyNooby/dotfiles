@@ -1,6 +1,6 @@
 // What the Shortcuts card and the cheat sheet (Super + /) list.
 // Hyprland and terminal keys are written out here: edit these lists when you rebind something
-// (dotfiles/hypr/hyprland.lua, tmux in home/shell.nix). Your aliases are read live from
+// (hypr/hyprland.lua, and your tmux config). Your aliases are read live from
 // ~/aliases/*.zsh by scripts/aliases, so new ones show up by themselves.
 pragma Singleton
 import QtQuick

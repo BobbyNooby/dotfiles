@@ -8,8 +8,8 @@ cursor_border = "{{colors.primary.default.hex}}"
 selection_bg = "{{colors.primary_container.default.hex}}"
 selection_fg = "{{colors.on_primary_container.default.hex}}"
 split = "{{colors.outline_variant.default.hex}}"
-# The 16 terminal colours are FIXED (Tokyo Night Storm, the Mac's theme; same as the boot
-# console in hosts/roxy/configuration.nix), not from the wallpaper. matugen's base16 palette
+# The 16 terminal colours are FIXED (Tokyo Night Storm, the same as the
+# boot console), not from the wallpaper. matugen's base16 palette
 # is tones of the wallpaper, not real hues: with a dark red wallpaper its "green", "blue" and
 # "cyan" all came out near-black on the background, so highlights (e.g. `gh auth login`'s
 # selection) disappeared. Background, text, cursor, selection and tabs above still follow it.

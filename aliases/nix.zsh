@@ -1,4 +1,4 @@
-# rebuild: apply config changes from ~/nixos-config (system + home), shows a diff of what changed
+# rebuild: apply config changes from your flake ($NH_FLAKE: system + home), shows a diff of what changed
 alias rebuild='nh os switch'
 
 # update: update every package to the latest, then apply
@@ -14,4 +14,4 @@ alias rollback='sudo nixos-rebuild switch --rollback'
 alias nixclean='nh clean all --keep-since 14d --keep 5'
 
 # nixedit: open the config repo in the editor
-alias nixedit='nvim ~/nixos-config'
+alias nixedit='nvim "${NH_FLAKE:-$HOME/nixos-config}"'

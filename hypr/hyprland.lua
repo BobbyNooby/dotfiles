@@ -49,8 +49,8 @@ end)
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")
--- Which GPU Hyprland draws on (AQ_DRM_DEVICES = the AMD iGPU) is set in hosts/roxy/gpu.nix,
--- so it only switches on once the card IDs are filled in there.
+-- Which GPU Hyprland draws on (AQ_DRM_DEVICES, e.g. the integrated one on a hybrid laptop) is
+-- set outside this file: on NixOS in the host's gpu.nix, elsewhere in your session environment.
 
 
 -----------------------
@@ -260,7 +260,7 @@ local done = ' "$f" && wl-copy < "$f" && notify-send -a Screenshot -i "$f" Scree
 hl.bind("Print",         hl.dsp.exec_cmd(shot .. 'grim -g "$(slurp)"' .. done))
 hl.bind("SHIFT + Print", hl.dsp.exec_cmd(shot .. 'grim' .. done))
 
--- Control Center: Wi-Fi, Bluetooth, sound, power mode, brightness... (Cmd + , on the Mac)
+-- Control Center: Wi-Fi, Bluetooth, sound, power mode, brightness... (like Cmd + , on macOS)
 hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("qs ipc call controls toggle"))
 
 -- Clipboard history picker
@@ -276,7 +276,7 @@ hl.bind(mainMod .. " + A",         hl.dsp.exec_cmd("qs ipc call hermes toggle"))
 hl.bind(mainMod .. " + slash",     hl.dsp.exec_cmd("qs ipc call cheatsheet toggle")) -- keys + aliases cheat sheet
 hl.bind(mainMod .. " + W",         hl.dsp.exec_cmd("qs ipc call wallpicker toggle")) -- wallpaper switcher (WallpaperPicker.qml); `setwall` alone is the rofi fallback
 
--- Dictation (Voxtype, home/voxtype.nix): hold Super+Z and speak, let go to type the text at the
+-- Dictation (Voxtype, if installed): hold Super+Z and speak, let go to type the text at the
 -- cursor. Super+Shift+Z throws the recording away. (Super+V = float, Super+Escape = lock: taken.)
 hl.bind(mainMod .. " + Z",         hl.dsp.exec_cmd("voxtype record start"))
 hl.bind(mainMod .. " + Z",         hl.dsp.exec_cmd("voxtype record stop"), { release = true })
@@ -326,7 +326,7 @@ hl.window_rule({
     no_focus = true,
 })
 
--- ---- Apps on their own workspaces (the Mac's AeroSpace layout) ----
+-- ---- Apps on their own workspaces (an AeroSpace-style layout) ----
 -- 1 browser · 2 terminal · 3 code · 4 chat (tabbed) · 5 notes · 6 music · 7 mail · 8 anything else · 9 VPN
 -- Rules only apply when a window opens, so already-open windows stay where they are.
 -- Check a window's class with `hyprctl clients`.
@@ -343,7 +343,7 @@ on_workspace("ws8-files",   "^org\\.gnome\\.Nautilus$",      8)
 on_workspace("ws9-vpn",     "^(Surfshark|surfshark|com\\.surfshark\\.Surfshark)$", 9)
 -- 7 mail: Outlook/WhatsApp web apps get their own class once installed as Edge apps; add them then.
 
--- Chat apps open as tabs of one group (the Mac's accordion). OFF for now: with only Discord
+-- Chat apps open as tabs of one group (like AeroSpace's accordion). OFF for now: with only Discord
 -- installed, a group of one just costs 21px of height for a single-tab tab bar, so Discord
 -- wasn't filling the screen. Uncomment once Slack is actually here.
 -- hl.window_rule({ name = "chat-tabbed", match = { class = "^(discord|[Ss]lack)$" }, group = "set" })

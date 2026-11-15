@@ -1,7 +1,7 @@
 // Colours, fonts and sizes for every part of the shell.
 // matugen writes colors.json next to this file from the wallpaper (run `setwall <image>`);
 // the shell recolours the moment the file changes. The values below are the fallback
-// (Tokyo Night Storm, the Mac's theme) for when colors.json doesn't exist yet.
+// (Tokyo Night Storm) for when colors.json doesn't exist yet.
 //
 // Look: the "Clean desktop" design (claude.ai design canvas "NixOS Desktop Preview"):
 // Outfit for big numbers and headings, Inter for everything else, very round corners.

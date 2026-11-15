@@ -6,7 +6,7 @@
 #
 # Get the files: surfshark.com → VPN → Manual setup → Desktop or mobile → WireGuard →
 # "I don't have a key pair" → Generate (once) → pick locations → download each .conf.
-# The private key ends up in NetworkManager's own store (root-only), never in ~/nixos-config.
+# The private key ends up in NetworkManager's own store (root-only), never in any config repo.
 # After importing, the downloaded .conf files hold the key in plain text: delete them.
 set -euo pipefail
 
