@@ -2,7 +2,7 @@
 # setwall [image]: set the wallpaper and recolour everything from it (Quickshell, Hyprland,
 # WezTerm, rofi, GTK) with matugen. No image: pick one from your wallpapers folder in rofi.
 # The shell's wallpaper switcher (Super+W) calls this too. Put it on your PATH.
-# (Standalone copy for the public dotfiles; on NixOS it's built in home/hyprland.nix.)
+# (On NixOS this can be built by Home Manager instead of copied.)
 set -eu
 wall=$(jq -r '.folders.wallpapers // "Pictures/Wallpapers"' "$HOME/.config/desktop/settings.json" 2>/dev/null || echo Pictures/Wallpapers)
 case "$wall" in /*) ;; *) wall="$HOME/${wall#\~/}" ;; esac
