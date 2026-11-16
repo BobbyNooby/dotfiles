@@ -168,6 +168,9 @@ Singleton {
     }
 
     function refresh() { tsStatusProc.running = true; vpnProc.running = true }
-    Timer { interval: 10000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
+    // NetworkManager events (Net.qml) cover VPN and Tailscale going up or down; the slow timer
+    // is for what isn't an event (Tailscale peers coming online)
+    Connections { target: Net; function onChanged() { root.refresh() } }
+    Timer { interval: 60000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
     Timer { id: settle; interval: 2500; onTriggered: root.refresh() }
 }

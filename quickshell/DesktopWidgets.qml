@@ -76,7 +76,8 @@ PanelWindow {
                 radius: 3
                 width: parent.width * Math.max(0, Math.min(1, meter.fraction))
                 color: meter.fraction > 0.9 ? Theme.danger : Theme.accent
-                Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+                // No width animation: it redrew the whole widget layer 60 times a second for
+                // 0.4 s after every reading (the System card alone cost ~4% CPU).
             }
         }
     }

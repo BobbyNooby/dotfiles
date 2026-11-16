@@ -8,6 +8,7 @@
 // Files:
 //   Theme.qml               colours (from matugen's colors.json), fonts, sizes
 //   Icon.qml / Txt.qml / Toggle.qml / Clicky.qml   small building blocks (icons, text, switch, button)
+//   BatteryWatch.qml        low-battery notifications (20%, 10%, 5%)
 //   SmoothWheel.qml         smooth mouse-wheel / touchpad scrolling for any scrolling list
 //   Common.js               helpers several files share (battery time, Bluetooth icon, brightness, EasyEffects)
 //   Bar.qml                 the top bar
@@ -80,6 +81,7 @@ ShellRoot {
     Launcher {}
     LockScreen {}
     LevelOsd {}
+    BatteryWatch {}
     ControlCenter {}
     SettingsWindow {}
 }

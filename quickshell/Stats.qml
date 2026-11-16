@@ -30,7 +30,7 @@ Singleton {
     property string tempPath: "" // found once: hwmon numbers change between boots
 
     Timer {
-        interval: 2000
+        interval: 3000
         running: true
         repeat: true
         triggeredOnStart: true
@@ -53,7 +53,8 @@ Singleton {
             const total = f.reduce((a, b) => a + b, 0);
             if (root.lastCpu) {
                 const dt = total - root.lastCpu.total;
-                if (dt > 0) root.cpu = 1 - (idle - root.lastCpu.idle) / dt;
+                // whole percents: a 0.3% wobble shouldn't redraw the bar and the System card
+                if (dt > 0) root.cpu = Math.round((1 - (idle - root.lastCpu.idle) / dt) * 100) / 100;
             }
             root.lastCpu = { idle, total };
         }
@@ -66,8 +67,8 @@ Singleton {
             const kb = key => Number((text().match(new RegExp(key + ":\\s+(\\d+)")) ?? [0, 0])[1]);
             const total = kb("MemTotal"), avail = kb("MemAvailable");
             if (total > 0) {
-                root.mem = 1 - avail / total;
-                root.memUsedGb = (total - avail) / 1048576;
+                root.mem = Math.round((1 - avail / total) * 100) / 100;
+                root.memUsedGb = Math.round((total - avail) / 104857.6) / 10; // one decimal
                 root.memTotalGb = total / 1048576;
             }
             const st = kb("SwapTotal"), sf = kb("SwapFree");

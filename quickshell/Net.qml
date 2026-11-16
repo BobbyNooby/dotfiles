@@ -1,5 +1,7 @@
 // Network status for the bar's Wi-Fi button and the Wi-Fi popup.
-// Asks NetworkManager (nmcli) every 5 s, and right away after a change made from here.
+// Event-driven: `nmcli monitor` runs alongside and every change NetworkManager reports (connect,
+// disconnect, Wi-Fi on/off, VPN up/down) triggers one refresh. No polling, except the signal
+// strength (every 30 s: it isn't an event) and the network list while the Wi-Fi popup is open.
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -113,6 +115,18 @@ Singleton {
     }
 
     onScanningChanged: if (scanning) { cachedFirst = true; refresh() }
-    Timer { interval: root.scanning ? 4000 : 5000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
+    Timer { interval: root.scanning ? 4000 : 30000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
+
+    // NetworkManager's own event stream. `changed` also tells Vpn.qml to look again.
+    signal changed()
+    Process {
+        id: monitor
+        running: true
+        command: ["nmcli", "monitor"]
+        stdout: SplitParser { onRead: line => events.restart() }
+        onExited: restartMonitor.start() // NetworkManager restarted: listen again
+    }
+    Timer { id: restartMonitor; interval: 5000; onTriggered: monitor.running = true }
+    Timer { id: events; interval: 400; onTriggered: { root.refresh(); root.changed() } } // one refresh per burst
     Timer { id: settle; interval: 1500; onTriggered: root.refresh() } // after a change from here
 }

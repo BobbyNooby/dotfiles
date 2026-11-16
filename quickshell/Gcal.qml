@@ -30,7 +30,7 @@ Singleton {
 
     readonly property bool connected: accounts.length > 0
     readonly property bool hasCalendar: accounts.some(a => a.calendar)
-    readonly property bool busy: accountsProc.running || eventsProc.running || unreadProc.running
+    readonly property bool busy: !!(accountsProc.running || eventsProc.running || unreadProc.running)
     readonly property int unreadTotal: unread.reduce((n, a) => n + (a.unread ?? 0), 0)
     readonly property var unreadAccounts: unread.filter(a => (a.unread ?? 0) > 0)
     // "Offline · as of 14:05" (or "as of Mon 16 Nov 14:05") when showing saved events
@@ -124,7 +124,7 @@ Singleton {
     }
 
     Timer { interval: 600000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.runAccounts(true) }
-    Timer { interval: 180000; running: root.connected; repeat: true; onTriggered: root.fetchUnread() }
+    Timer { interval: 600000; running: root.connected; repeat: true; onTriggered: root.fetchUnread() }
     Timer { id: retry; interval: 60000; running: root.stale && Net.online; onTriggered: root.refresh() }
     SystemClock { precision: SystemClock.Minutes; onDateChanged: root.tick++ }
     Connections { // network back: fetch now instead of waiting
