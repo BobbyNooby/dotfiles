@@ -126,6 +126,7 @@ SetPage {
                 { k: "weather",     label: "Clocks and weather", icon: "sun" },
                 { k: "system",      label: "System",             icon: "cpu" },
                 { k: "connections", label: "Connections",        icon: "tailscale" },
+                { k: "calendar",    label: "Calendar",           icon: "calendar" },
                 { k: "shortcuts",   label: "Shortcuts",          icon: "keyboard" },
                 { k: "player",      label: "Music controller",   icon: "music" },
                 { k: "lyrics",      label: "Floating lyrics",    icon: "lyrics" }

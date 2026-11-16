@@ -1,7 +1,8 @@
 // Widgets on the desktop itself (under your windows, above the wallpaper):
 //   top left:     both cities' clocks with a 48-hour forecast (Weather.qml)
 //   top right:    System (CPU, memory, NVIDIA asleep/awake, battery, power profile)
-//                 and Connections (Tailscale + Surfshark switches, home devices)
+//                 and Connections (Tailscale + Surfshark switches, home devices),
+//                 Calendar (the calendar popup's month + the chosen day's Google events)
 //   bottom:       floating lyrics and a music controller you can drag anywhere (it remembers where)
 // One see-through window covers the screen; Hyprland blurs only behind the cards.
 import QtQuick
@@ -319,12 +320,14 @@ PanelWindow {
                 }
             }
             Flickable {
+                id: keysFlick
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 implicitHeight: list.implicitHeight
                 contentHeight: list.implicitHeight
                 boundsBehavior: Flickable.StopAtBounds
                 clip: true
+                SmoothWheel { flick: keysFlick }
                 KeyList {
                     id: list
                     width: parent.width
@@ -567,6 +570,22 @@ PanelWindow {
                         color: Theme.textDim
                     }
                 }
+            }
+        }
+
+        // ---------- Calendar: the popup's month + day list (CalMonth, CalDayList, Gcal.qml) ----------
+        Card {
+            visible: Settings.show("calendar")
+            Layout.fillWidth: true
+            implicitHeight: calCol.implicitHeight + 26
+            ColumnLayout {
+                id: calCol
+                x: 12
+                y: 12
+                width: parent.width - 24
+                spacing: 8
+                CalMonth { id: calMonth; Layout.fillWidth: true; cellHeight: 32; titleSize: 16 }
+                CalDayList { Layout.fillWidth: true; day: calMonth.selected; maxListHeight: 150; upcomingCount: 10; spacing: 8 }
             }
         }
     }

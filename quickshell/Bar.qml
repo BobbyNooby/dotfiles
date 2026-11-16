@@ -1,7 +1,8 @@
 // The top bar, one per monitor. Floats 8 px below the screen edge, 44 px tall.
 //   left:   your picture (account popup), then workspaces with icons of the apps open on them
 //   centre: what's playing (click = the player, scroll = next/previous, ▶/⏸ = play/pause)
-//   right:  tray apps · RAM · keyboard language · volume · Wi-Fi · Bluetooth · battery · notifications · time
+//   right:  tray apps · RAM · keyboard language · volume · Wi-Fi · Bluetooth · battery · notifications ·
+//           unread mail (only when there is some) · time (click = calendar)
 // Each button opens its popup under it (Popups.qml). Save this file and the bar redraws.
 import QtQuick
 import QtQuick.Layouts
@@ -380,13 +381,42 @@ PanelWindow {
                 }
             }
 
-            // Time and date
-            RowLayout {
-                Layout.leftMargin: 8
-                Layout.rightMargin: 8
-                spacing: 8
-                Txt { heading: true; text: Qt.formatDateTime(clock.date, "HH:mm"); font.pixelSize: 16 }
-                Txt { text: Qt.formatDateTime(clock.date, "ddd d MMM"); font.pixelSize: 12; color: Theme.textDim }
+            // Unread Gmail (Gcal.qml), only when there is some: click = that inbox in the browser;
+            // with unread in several accounts, a list of them (MailPanel.qml)
+            Clicky {
+                id: mailBtn
+                visible: Gcal.unreadTotal > 0
+                implicitWidth: mailRow.implicitWidth + 16
+                implicitHeight: 32
+                base: Popups.open === "mail" ? Theme.bgHighest : "transparent"
+                onClicked: {
+                    const u = Gcal.unreadAccounts;
+                    if (u.length > 1) Popups.toggle("mail", bar.centreOf(mailBtn));
+                    else Gcal.openMail(u[0]?.account ?? "");
+                }
+                RowLayout {
+                    id: mailRow
+                    anchors.centerIn: parent
+                    spacing: 6
+                    Icon { name: "mail"; size: 17; stroke: 1.9 }
+                    Txt { text: Gcal.count(Gcal.unreadTotal); font.pixelSize: 12; font.weight: Font.DemiBold }
+                }
+            }
+
+            // Time and date: click = the calendar (CalendarPanel.qml)
+            Clicky {
+                id: clockBtn
+                implicitWidth: clockRow.implicitWidth + 16
+                implicitHeight: 32
+                base: Popups.open === "calendar" ? Theme.bgHighest : "transparent"
+                onClicked: Popups.toggle("calendar", bar.centreOf(clockBtn))
+                RowLayout {
+                    id: clockRow
+                    anchors.centerIn: parent
+                    spacing: 8
+                    Txt { heading: true; text: Qt.formatDateTime(clock.date, "HH:mm"); font.pixelSize: 16 }
+                    Txt { text: Qt.formatDateTime(clock.date, "ddd d MMM"); font.pixelSize: 12; color: Theme.textDim }
+                }
             }
         }
     }

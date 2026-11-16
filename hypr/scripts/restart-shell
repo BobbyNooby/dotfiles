@@ -1,0 +1,9 @@
+#!/bin/sh
+# Restart Quickshell (Super+Shift+B). `qs kill` asks it to exit, but it sometimes hangs halfway
+# (bar gone, `qs ipc` calls, the lock included, never answer): after 3 s, force it.
+# Never leaves two running (two make `qs ipc` hang).
+for _ in 1 2 3 4 5; do timeout 3 qs kill >/dev/null 2>&1 || break; done
+sleep 1
+pids=$(pgrep -f "quickshell -n -d")
+[ -n "$pids" ] && kill -9 $pids && sleep 0.5
+exec setsid qs -n -d >/dev/null 2>&1 </dev/null

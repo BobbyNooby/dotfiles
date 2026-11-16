@@ -8,12 +8,16 @@
 // Files:
 //   Theme.qml               colours (from matugen's colors.json), fonts, sizes
 //   Icon.qml / Txt.qml / Toggle.qml / Clicky.qml   small building blocks (icons, text, switch, button)
+//   SmoothWheel.qml         smooth mouse-wheel / touchpad scrolling for any scrolling list
 //   Common.js               helpers several files share (battery time, Bluetooth icon, brightness, EasyEffects)
 //   Bar.qml                 the top bar
-//   DesktopWidgets.qml      clocks + weather, System, Connections, lyrics, music controller
+//   DesktopWidgets.qml      clocks + weather, System, Connections, Calendar, lyrics, music controller
 //   Wallpaper.qml           draws the wallpaper chosen with `setwall`
 //   Popups.qml              which dropdown is open; Dropdown.qml is the base they share:
 //     AccountPanel.qml (your picture; Avatar.qml draws it) MemoryPanel.qml (what uses the RAM) InputPanel.qml (typing language) MusicPanel.qml WifiPanel.qml BluetoothPanel.qml VolumePanel.qml BatteryPanel.qml NotificationCenter.qml
+//     CalendarPanel.qml (click the clock: month + the day's Google events) MailPanel.qml (unread per account)
+//   CalMonth.qml / CalDayList.qml   the month grid and the day's events, shared by the calendar
+//                           popup and the desktop Calendar card
 //   HermesPanel.qml         Super+A side panel (chat in Hermes.qml, scripts/ask)
 //   WallpaperPicker.qml     Super+W: tabs, Now vs New with their colours, a tilting carousel
 //   AvatarPicker.qml        account picture grid (ImageList.qml finds images, WallColors.qml previews colours)
@@ -33,7 +37,10 @@
 //   SettingsWindow.qml      Settings (Super+I): a page per topic, Set<Name>Page.qml each, built from
 //                           SetPage/SetCard/SetRow/SetChoice/SetButton/SetField + OverrideNote.qml
 //   data: Media (player + lyrics), Stats (CPU, memory, GPU), Weather, Net (Wi-Fi),
-//         Vpn (Tailscale + Surfshark, the Connections card)
+//         Vpn (Tailscale + Surfshark, the Connections card),
+//         Gcal (Google accounts, calendar events, unread mail; cached for offline)
+//   scripts/google          Google accounts for the shell and Hermes (accounts, events, unread,
+//                           connect/disconnect; Settings → Accounts = SetAccountsPage.qml)
 //   scripts/wifi-menu       network picker in rofi (for new secured networks)
 //   scripts/ask             one question to Hermes or Claude Code, for the side panel
 //   cava.conf               the player's visualiser
@@ -61,6 +68,8 @@ ShellRoot {
     BluetoothPanel {}
     VolumePanel {}
     BatteryPanel {}
+    CalendarPanel {}
+    MailPanel {}
     NotificationCenter {}
     NotificationPopups {}
     HermesPanel {}

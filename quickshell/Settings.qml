@@ -18,7 +18,7 @@ import Quickshell.Io
 //
 // Keys: repo, cities [{ id, name, short, zone, tz, lat, lon }], folders { wallpapers, pictures,
 // screenshots, screenshotSave }, gpu, vpnPrefix, lockGlow (strong/soft/off),
-// widgets { weather, system, connections, shortcuts, player, lyrics }, typeface (Theme.qml:
+// widgets { weather, system, connections, shortcuts, player, lyrics, calendar }, typeface (Theme.qml:
 // outfit, grotesk, mono, condensed, serif, dotmatrix).
 Singleton {
     id: root
@@ -37,7 +37,7 @@ Singleton {
         lockGlow: "strong",
         typeface: "outfit",
         // desktop widgets on/off
-        widgets: { weather: true, system: true, connections: true, shortcuts: true, player: true, lyrics: true },
+        widgets: { weather: true, system: true, connections: true, shortcuts: true, player: true, lyrics: true, calendar: true },
         // hypridle (hypr/scripts/idle-config turns these into hypridle.conf); seconds, 0 = never
         idle: { dim: 150, lock: 300, screenOff: 330, suspend: 1800, suspendPluggedIn: true, lockOnSleep: true, lid: "suspend", lidPluggedIn: "suspend" }
     })
@@ -82,7 +82,7 @@ Singleton {
         interval: 400
         onTriggered: Quickshell.execDetached([root.home + "/.config/hypr/scripts/idle-config"])
     }
-    // Is this desktop widget switched on? (weather, system, connections, shortcuts, player, lyrics)
+    // Is this desktop widget switched on? (weather, system, connections, shortcuts, player, lyrics, calendar)
     function show(name) { return (data.widgets ?? {})[name] ?? defaults.widgets[name] ?? true }
 
     // ---- overrides (the Settings window) ----

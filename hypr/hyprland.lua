@@ -274,7 +274,7 @@ hl.bind("CTRL + space", hl.dsp.exec_cmd("qs ipc call input next")) -- next typin
 -- Quickshell: restart it, notification list, do not disturb, pick a wallpaper
 -- (`qs kill` stops one copy at a time: keep going until none is left, so a restart never
 -- leaves two shells running, which makes `qs ipc` calls like the lock hang)
-hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("for i in 1 2 3 4 5; do qs kill >/dev/null 2>&1 || break; done; qs -n -d"))
+hl.bind(mainMod .. " + SHIFT + B", hl.dsp.exec_cmd("~/.config/hypr/scripts/restart-shell")) -- restart the shell (forces it if it hangs)
 hl.bind(mainMod .. " + N",         hl.dsp.exec_cmd("qs ipc call notifs toggleCenter"))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("qs ipc call notifs toggleDnd"))
 hl.bind(mainMod .. " + A",         hl.dsp.exec_cmd("qs ipc call hermes toggle")) -- Hermes side panel

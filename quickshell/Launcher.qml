@@ -280,6 +280,7 @@ PanelWindow {
         ["keyboard", "Keyboard & language", "keyboard", "input layout fcitx ime language"],
         ["appearance", "Appearance", "image", "wallpaper theme colours fonts look"],
         ["clocks", "Clocks & weather", "clock", "time zone cities forecast"],
+        ["accounts", "Accounts", "user", "google calendar gmail mail sign in hermes mcp"],
         ["power", "Power", "battery", "battery profile sleep idle"],
         ["about", "About", "info", "system version hardware"]
     ].map(([page, label, icon, words]) => ({
@@ -633,6 +634,7 @@ PanelWindow {
             // ---- results ----
             ListView {
                 id: list
+                SmoothWheel { flick: list }
                 Layout.fillWidth: true
                 Layout.preferredHeight: Math.min(contentHeight + 16, 470)
                 Layout.leftMargin: 8

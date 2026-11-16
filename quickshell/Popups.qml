@@ -1,4 +1,5 @@
-// Which dropdown under the bar is open: "account", "memory", "input", "music", "wifi", "bluetooth", "volume", "battery", "notifs", "controls" or "".
+// Which dropdown under the bar is open: "account", "memory", "input", "music", "wifi", "bluetooth", "volume", "battery", "notifs", "controls",
+// "calendar", "mail" or "".
 // Only one at a time. The bar's buttons call toggle(name, x) with their centre, so the popup
 // opens right under the button. From a terminal or keybind:
 //   qs ipc call popups toggle wifi      qs ipc call popups close

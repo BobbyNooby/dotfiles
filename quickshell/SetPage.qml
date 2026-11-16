@@ -13,6 +13,7 @@ Flickable {
     boundsBehavior: Flickable.StopAtBounds
     clip: true
     ScrollBar.vertical: ScrollBar { policy: page.contentHeight > page.height ? ScrollBar.AsNeeded : ScrollBar.AlwaysOff }
+    SmoothWheel { flick: page }
 
     ColumnLayout {
         id: col

@@ -2,7 +2,7 @@
 // A centred window with a sidebar of pages; Esc or a click outside closes it.
 //   qs ipc call settings toggle
 //   qs ipc call settings open <page>   wifi bluetooth sound notifications keyboard appearance
-//                                      clocks power about ("" = the last page)
+//                                      clocks accounts power about ("" = the last page)
 //   qs ipc call settings set <key> <json> / reset <key> / nix <key>   (see the IpcHandler)
 // Each page is its own file (Set<Name>Page.qml), loaded only while it's shown, so the
 // commands a page runs (nmcli, fcitx5-remote, ...) only run while you look at it.
@@ -26,6 +26,7 @@ PanelWindow {
         { id: "keyboard",      label: "Keyboard & language", icon: "keyboard", file: "SetKeyboardPage.qml" },
         { id: "appearance",    label: "Appearance",         icon: "image",     file: "SetAppearancePage.qml" },
         { id: "clocks",        label: "Clocks & weather",   icon: "clock",     file: "SetClocksPage.qml" },
+        { id: "accounts",      label: "Accounts",           icon: "user",      file: "SetAccountsPage.qml" },
         { id: "power",         label: "Power",              icon: "battery",   file: "SetPowerPage.qml" },
         { id: "about",         label: "About",              icon: "info",      file: "SetAboutPage.qml" }
     ]

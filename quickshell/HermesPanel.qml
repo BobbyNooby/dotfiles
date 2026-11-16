@@ -126,6 +126,7 @@ PanelWindow {
             // ---- the conversation ----
             ListView {
                 id: chat
+                SmoothWheel { flick: chat }
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.topMargin: 6

@@ -66,6 +66,8 @@ PanelWindow {
         }
 
         Flickable {
+            id: sheetFlick
+            SmoothWheel { flick: sheetFlick }
             x: 28
             y: 70
             width: parent.width - 56

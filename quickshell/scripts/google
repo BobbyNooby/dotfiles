@@ -1,0 +1,109 @@
+#!/bin/sh
+# Your Google accounts, shared by Hermes and the shell (calendar, unread mail).
+# Sign-in and tokens are Hermes' google-workspace skill. Everything lives in ~/.hermes, never git:
+#   google_client_secret.json     the OAuth client (one for all accounts)
+#   google_token_<name>.json      one per account (e.g. main, work)
+#   google_token.json             → the main account: what Hermes uses by default
+#   google_accounts.json          name → address, written when you connect
+#
+#   google accounts               JSON [{ name, account, calendar, gmail }]
+#   google events FROM TO         JSON events (ISO times) from every account's shown calendars
+#   google unread                 JSON [{ name, account, unread }] for accounts with Gmail
+#   google connect NAME           sign an account in (interactive: run in a terminal)
+#   google disconnect NAME        revoke and delete that account's token
+#
+# Uses Hermes' own Python (it has the Google libraries), found through the `hermes` command.
+here=$(dirname "$(readlink -f "$0")")
+home=${HERMES_HOME:-$HOME/.hermes}
+skill="$home/skills/productivity/google-workspace/scripts"
+names="$home/google_accounts.json"
+
+py=""
+if h=$(command -v hermes); then
+    # the wrapper ends in: exec "/nix/store/...-hermes-agent-env/bin/hermes" ...
+    env=$(grep -o '/nix/store/[^"]*-hermes-agent-env' "$(readlink -f "$h")" | head -1)
+    [ -x "$env/bin/python3" ] && py="$env/bin/python3"
+fi
+[ -n "$py" ] && [ -f "$skill/setup.py" ] || { echo '{"error":"Hermes or its google-workspace skill not found","noHermes":true}'; exit 1; }
+export GOOGLE_SKILL_DIR="$skill"
+
+# A folder that looks like ~/.hermes to the skill but holds one account's token
+acct_home() {
+    d="${XDG_RUNTIME_DIR:-/tmp}/google-accounts/$1"
+    mkdir -p "$d" && chmod 700 "${XDG_RUNTIME_DIR:-/tmp}/google-accounts"
+    ln -sf "$home/google_client_secret.json" "$d/google_client_secret.json"
+    ln -sf "$home/google_token_$1.json" "$d/google_token.json"
+    echo "$d"
+}
+list() { for f in "$home"/google_token_*.json; do [ -f "$f" ] && basename "$f" .json | sed 's/^google_token_//'; done; }
+has_scope() { jq -e --arg s "$2" '(.scopes // []) | any(contains($s))' "$home/google_token_$1.json" >/dev/null 2>&1; }
+address() { jq -r --arg n "$1" '.[$n] // ""' "$names" 2>/dev/null; }
+
+case "$1" in
+accounts)
+    for n in $(list); do
+        jq -n --arg n "$n" --arg a "$(address "$n")" \
+            --argjson c "$(has_scope "$n" calendar && echo true || echo false)" \
+            --argjson g "$(has_scope "$n" gmail && echo true || echo false)" \
+            '{ name: $n, account: $a, calendar: $c, gmail: $g }'
+    done | jq -s . ;;
+events)
+    for n in $(list); do
+        has_scope "$n" calendar || continue
+        HERMES_HOME=$(acct_home "$n") "$py" "$here/google_shell.py" events "$2" "$3" \
+            | jq -c --arg n "$n" 'if type == "array" then map(. + { accountName: $n }) else [] end'
+    done | jq -s 'add // [] | sort_by(.start)' ;;
+unread)
+    for n in $(list); do
+        has_scope "$n" gmail || continue
+        HERMES_HOME=$(acct_home "$n") "$py" "$here/google_shell.py" unread \
+            | jq -c --arg n "$n" 'select(.unread != null) | . + { name: $n }'
+    done | jq -s . ;;
+disconnect)
+    [ -n "$2" ] && [ -f "$home/google_token_$2.json" ] || { echo "No account called '$2'."; exit 1; }
+    HERMES_HOME=$(acct_home "$2") "$py" "$skill/setup.py" --revoke >/dev/null 2>&1
+    rm -f "$home/google_token_$2.json"
+    [ -f "$names" ] && jq --arg n "$2" 'del(.[$n])' "$names" > "$names.tmp" && mv "$names.tmp" "$names"
+    [ "$(readlink "$home/google_token.json")" = "google_token_$2.json" ] && rm -f "$home/google_token.json"
+    echo "Disconnected $2." ;;
+connect)
+    name=$2
+    printf '\n  Connect a Google account (Calendar + Gmail) for the shell and Hermes\n  -------------------------------------------------------------------\n\n'
+    while [ -z "$name" ]; do printf '  A short name for this account (e.g. main, work): '; read -r name; done
+    name=$(echo "$name" | tr -cd 'a-zA-Z0-9_-')
+    [ -f "$home/google_client_secret.json" ] || { echo "  No OAuth client: put it at $home/google_client_secret.json first."; read -r _; exit 1; }
+    d=$(acct_home "$name.new"); rm -f "$d/google_token.json"
+    url=$(HERMES_HOME=$d "$py" "$here/google_shell.py" auth-url | jq -r '.auth_url // empty')
+    [ -n "$url" ] || { echo "  Couldn't make the sign-in link."; read -r _; exit 1; }
+    cat <<TXT
+  Opening Google's sign-in for "$name" in your browser.
+  Pick the right Google account and allow access (it may warn the app isn't verified:
+  it's your own app, so "Advanced → Go to …" is fine).
+
+  Afterwards the browser shows an error page at "localhost:1". That's expected.
+  Copy that page's whole address (Ctrl+L, Ctrl+C) and paste it here.
+
+  (If it didn't open: $url)
+
+TXT
+    xdg-open "$url" >/dev/null 2>&1 &
+    printf '  Address: '; read -r code
+    res=$(HERMES_HOME=$d "$py" "$here/google_shell.py" auth-code "$code")
+    if [ ! -s "$d/google_token.json" ]; then
+        echo "$res" | jq -r '"  Failed: " + (.error // "unknown") + "\n  Run it again to retry."'
+        printf '\n  Press Enter to close. '; read -r _; exit 1
+    fi
+    umask 077
+    cp "$d/google_token.json" "$home/google_token_$name.json"; rm -rf "$d"
+    who=$(HERMES_HOME=$(acct_home "$name") "$py" "$here/google_shell.py" whoami | jq -r '.account // ""')
+    [ -f "$names" ] || echo '{}' > "$names"
+    jq --arg n "$name" --arg a "$who" '.[$n] = $a' "$names" > "$names.tmp" && mv "$names.tmp" "$names"
+    # the first account (or one called "main") is what Hermes uses by default
+    if [ "$name" = main ] || [ ! -e "$home/google_token.json" ]; then
+        ln -sf "google_token_$name.json" "$home/google_token.json"
+    fi
+    printf '\n  Connected "%s" (%s).\n' "$name" "${who:-address unknown}"
+    printf '\n  Press Enter to close. '; read -r _ ;;
+*)
+    sed -n '2,15p' "$0"; exit 1 ;;
+esac

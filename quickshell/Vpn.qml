@@ -97,11 +97,28 @@ Singleton {
     readonly property string vpnStatus: !current ? "Not set up" : (vpnOn ? "On · " : "Off · ") + current.label
     property bool vpnBusy: false
 
-    // "surfshark-uk-lon" → "UK · lon"
+    // "surfshark-uk-lon" → "🇬🇧 London": the country's flag and the city (Surfshark's codes;
+    // an unknown city shows its code)
+    readonly property var cityNames: ({
+        lon: "London", man: "Manchester", gla: "Glasgow", edi: "Edinburgh", zur: "Zurich",
+        dub: "Dublin", kul: "Kuala Lumpur", sng: "Singapore", sea: "Seattle", nyc: "New York",
+        lax: "Los Angeles", chi: "Chicago", mia: "Miami", dal: "Dallas", sfo: "San Francisco",
+        tor: "Toronto", van: "Vancouver", ams: "Amsterdam", fra: "Frankfurt", ber: "Berlin",
+        par: "Paris", mad: "Madrid", mil: "Milan", sto: "Stockholm", osl: "Oslo", cph: "Copenhagen",
+        tok: "Tokyo", osa: "Osaka", hkg: "Hong Kong", tai: "Taipei", seo: "Seoul", syd: "Sydney",
+        mel: "Melbourne", bkk: "Bangkok", jak: "Jakarta", mnl: "Manila", bom: "Mumbai", dxb: "Dubai"
+    })
+    function flag(cc) {
+        cc = (cc === "uk" ? "gb" : cc).toUpperCase(); // Surfshark says uk, the flag is GB
+        if (!/^[A-Z]{2}$/.test(cc)) return "";
+        return String.fromCodePoint(...[...cc].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+    }
     function labelOf(name) {
         const loc = name.slice(Settings.vpnPrefix.length).replace(/^[-_ ]+/, "");
         const parts = loc.split("-");
-        return parts.length > 1 ? parts[0].toUpperCase() + " · " + parts.slice(1).join(" ") : loc;
+        if (parts.length < 2) return loc;
+        const city = parts.slice(1).join(" ");
+        return flag(parts[0]) + " " + (cityNames[city] ?? parts[0].toUpperCase() + " · " + city);
     }
 
     function toggleVpn() {

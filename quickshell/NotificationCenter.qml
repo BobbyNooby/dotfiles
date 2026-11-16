@@ -60,6 +60,8 @@ Dropdown {
     }
 
     Flickable {
+        id: notifFlick
+        SmoothWheel { flick: notifFlick }
         visible: Notifs.count > 0
         Layout.fillWidth: true
         Layout.preferredHeight: Math.min(groupsCol.implicitHeight, 600)

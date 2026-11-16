@@ -23,22 +23,28 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
 
 ### The shell
 - **Bar:** workspaces with app icons, now playing, RAM, keyboard layout, volume, Wi-Fi,
-  Bluetooth, battery, notifications, clock, and your picture (account popup) on the left.
+  Bluetooth, battery, notifications, unread Gmail (when there is some), the clock (click: the
+  calendar), and your picture (account popup) on the left.
 - **Desktop widgets:**
   - one or two cities' clocks with a 48-hour forecast (Open-Meteo, saved for offline);
   - system (CPU, memory, NVIDIA asleep/awake, battery, power profile);
   - Tailscale and VPN switches;
   - a shortcuts card;
+  - a calendar: the month with dots for days with events, and the chosen day's Google Calendar
+    events (or what's coming up), saved for offline;
   - a draggable music controller;
   - synced lyrics that roll like a drum (LRCLIB, saved for offline).
 - **Popups:**
   - player (cava visualiser, wavy seek bar, EasyEffects presets);
-  - Wi-Fi, Bluetooth, volume, battery;
+  - calendar (click the clock): the month and the chosen day's events from every Google account,
+    with Join for Meet calls;
+  - Wi-Fi, Bluetooth, volume, battery, unread mail per account;
   - notifications grouped by app, with Do not disturb and per-app mute;
   - Quick settings.
 - **Settings window (Super+I):** Wi-Fi & VPN, Bluetooth, sound (devices, per-app volume,
   EasyEffects presets), notifications, keyboard & typing languages, appearance (wallpaper,
-  typeface, lock glow, widgets), clocks & weather, power, about. Desktop settings changed there
+  typeface, lock glow, widgets), clocks & weather, accounts (connect / remove Google accounts,
+  Hermes' MCP servers), power, about. Desktop settings changed there
   go to `~/.config/desktop/overrides.json`, on top of `settings.json`.
 - **Overlays:**
   - launcher (Super+Space): apps, windows, switches and actions, a calculator, files, emoji,
@@ -66,6 +72,8 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
    - Tailscale; EasyEffects;
    - blueman and pavucontrol;
    - `hermes` and `claude` for the side panel;
+   - `hermes` with its google-workspace skill for Google Calendar and Gmail (`quickshell/scripts/google`
+     signs accounts in through it; tokens stay in `~/.hermes`);
    - `qt6.qtshadertools`, only to edit the shader.
 2. **Fonts:**
    - Inter, Outfit, FiraCode Nerd Font;
