@@ -85,7 +85,7 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
    - your cities (one or two), picture folders, and where screenshots go;
    - your GPU's PCI address (for the asleep/awake row; `""` hides it);
    - the VPN connection prefix, the lock screen glow, and which widgets show;
-   - the idle times (dim, lock, screen off, sleep), also changeable in Settings → Power.
+   - the idle times (dim, lock, screen off, sleep) and the plain look in Saver mode (no blur, shadows or animations), both also in Settings → Power.
 
    Then run `~/.config/hypr/scripts/idle-config`: it writes `hypr/hypridle.conf` (not in the repo)
    and restarts hypridle. To keep it fresh, run it before hypridle starts, e.g. a systemd drop-in

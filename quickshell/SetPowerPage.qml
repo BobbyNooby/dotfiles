@@ -46,6 +46,18 @@ SetPage {
         }
     }
 
+    SetCard {
+        SetRow {
+            icon: "saver"
+            label: "Plain look in Saver mode"
+            sub: Settings.saverLook ? "Saver turns off blur, shadows and window animations" : "Saver keeps the full look"
+            toggle: true
+            on: Settings.saverLook
+            onSwitched: Settings.set("saverLook", !Settings.saverLook)
+        }
+        OverrideNote { key: "saverLook"; Layout.margins: 6 }
+    }
+
     // ---- battery ----
     SetCard {
         visible: page.hasBattery

@@ -1,8 +1,13 @@
 // Low-battery warnings: a notification when the charge drops past 20%, 10% and 5% while on
 // battery (the last two stay up until you close them). Plugging in resets it, so each level
 // warns once per discharge.
+//
+// Also the "battery look": in Saver mode (and `saverLook` on in the settings) Hyprland's blur,
+// shadows and window animations go off (hypr/scripts/saver-look); any other mode restores them.
+// Reloading Hyprland's config restores them too, so it's applied again after a reload.
 import QtQuick
 import Quickshell
+import Quickshell.Hyprland
 import Quickshell.Services.UPower
 
 Scope {
@@ -25,6 +30,15 @@ Scope {
             }
         }
     }
+    readonly property bool plain: Settings.saverLook && PowerProfiles.profile === PowerProfile.PowerSaver
+    function look() { Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/scripts/saver-look", plain ? "on" : "off"]) }
+    onPlainChanged: look()
+    Component.onCompleted: if (plain) look()
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) { if (event.name === "configreloaded" && root.plain) root.look() }
+    }
+
     onPctChanged: check()
     onDrainingChanged: check()
 }

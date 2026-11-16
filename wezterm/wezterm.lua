@@ -27,7 +27,14 @@ end
 config.font = wezterm.font("FiraCode Nerd Font Mono")
 config.font_size = 10.0 -- 13 on macOS (macOS counts 72 dpi, Linux 96, so 13 there ≈ 10 here)
 config.line_height = 1.2
-config.window_background_opacity = 0.75 -- see-through "glass": Hyprland blurs what's behind (decoration.blur)
+-- Battery look (hypr/scripts/saver-look writes this file in Saver mode): no blur behind the
+-- window then, so the glass would be hard to read: go nearly solid. Reloads when it changes.
+local saver_file = wezterm.home_dir .. "/.local/state/desktop/saver-look"
+wezterm.add_to_config_reload_watch_list(saver_file)
+local f = io.open(saver_file)
+local plain = f ~= nil and f:read("*l") == "on"
+if f then f:close() end
+config.window_background_opacity = plain and 0.96 or 0.75 -- see-through "glass": Hyprland blurs what's behind (decoration.blur)
 config.window_padding = { left = 10, right = 10, top = 8, bottom = 8 }
 config.window_decorations = "NONE" -- Hyprland draws the borders; no title bar needed
 config.window_close_confirmation = "NeverPrompt"

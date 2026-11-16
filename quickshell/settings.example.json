@@ -12,6 +12,7 @@
   },
   "gpu": "",
   "vpnPrefix": "surfshark",
+  "saverLook": true,
   "lockGlow": "strong",
   "typeface": "outfit",
   "widgets": { "weather": true, "system": true, "connections": true, "shortcuts": true, "player": true, "lyrics": true, "calendar": true },

@@ -1,0 +1,11 @@
+#!/bin/sh
+# Battery look: `saver-look on` turns off Hyprland's blur, shadows and window animations (they
+# cost GPU work every time a window redraws); `saver-look off` puts them back.
+# The shell runs it when the power mode changes (quickshell/BatteryWatch.qml): on in Saver mode,
+# if `saverLook` is on in the settings (Settings → Power).
+PATH="/run/current-system/sw/bin:/etc/profiles/per-user/$USER/bin:$PATH"
+case "$1" in on) v=false ;; off) v=true ;; *) echo "usage: saver-look on|off"; exit 1 ;; esac
+# WezTerm reads this file: without blur behind it, its see-through background is hard to read,
+# so it goes nearly solid while the plain look is on (wezterm/wezterm.lua)
+mkdir -p "$HOME/.local/state/desktop" && echo "$1" > "$HOME/.local/state/desktop/saver-look"
+hyprctl eval "hl.config({ decoration = { blur = { enabled = $v }, shadow = { enabled = $v } }, animations = { enabled = $v } })" >/dev/null

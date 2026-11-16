@@ -61,6 +61,7 @@ Singleton {
     readonly property string gpu: get("gpu") ?? ""                    // PCI address, "" = none
     readonly property string vpnPrefix: get("vpnPrefix") ?? "surfshark"
     readonly property string lockGlow: get("lockGlow") ?? "strong"
+    readonly property bool saverLook: get("saverLook") ?? true         // no blur/shadows/animations in Saver mode
     readonly property string typeface: get("typeface") ?? "outfit"    // Theme.qml's pairing
     readonly property var idle: Object.assign({}, defaults.idle, data.idle ?? {})
     // One idle setting (kept as a whole `idle` set, like widgets)
