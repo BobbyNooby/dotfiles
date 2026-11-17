@@ -54,10 +54,11 @@ Item {
     function cityHm(c) { clock.date; return c ? Weather.hm(c.id) : "" }
 
     // ---- small helpers ----
-    readonly property string user: (Quickshell.env("USER") || "user").toUpperCase()
-    property string host: ""
+    readonly property string user: Settings.demo ? "ALEX" : (Quickshell.env("USER") || "user").toUpperCase()
+    property string realHost: ""
+    readonly property string host: Settings.demo ? "NEBULA" : realHost // demo mode: made-up names
     property string generation: ""
-    FileView { path: "/etc/hostname"; watchChanges: true; onFileChanged: reload(); printErrors: false; onLoaded: board.host = text().trim().toUpperCase() } // configured name
+    FileView { path: "/etc/hostname"; watchChanges: true; onFileChanged: reload(); printErrors: false; onLoaded: board.realHost = text().trim().toUpperCase() } // configured name
     Process { // the NixOS generation in use: /nix/var/nix/profiles/system → system-142-link
         running: true
         command: ["readlink", "/nix/var/nix/profiles/system"]

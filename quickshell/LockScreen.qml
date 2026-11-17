@@ -104,8 +104,30 @@ Scope {
         }
     }
 
+    // A look at the lock screen without locking: the same board in an ordinary full-screen layer,
+    // for screenshots (a real lock can't be captured). `qs ipc call lock preview idle` (or
+    // verify / granted / denied); it closes itself after 8 s. It takes no keys and locks nothing.
+    property string previewPhase: ""
+    Timer { id: previewOff; interval: 8000; onTriggered: root.previewPhase = "" }
+    LazyLoader {
+        active: root.previewPhase !== ""
+        PanelWindow {
+            anchors { top: true; bottom: true; left: true; right: true }
+            exclusionMode: ExclusionMode.Ignore
+            WlrLayershell.layer: WlrLayer.Overlay
+            WlrLayershell.namespace: "qs-lock-preview"
+            color: EvaStyle.bg
+            EvaBoard {
+                anchors.centerIn: parent
+                scale: Math.min(parent.width / width, parent.height / height)
+                phase: root.previewPhase
+            }
+        }
+    }
+
     IpcHandler {
         target: "lock"
+        function preview(phase: string): void { root.previewPhase = phase || "idle"; previewOff.restart() }
         function lock(): void { root.lock() }
         // "locked" only once the compositor confirms it (scripts/lock relies on this)
         function status(): string { return session.secure ? "locked" : session.locked ? "pending" : "unlocked" }

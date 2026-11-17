@@ -17,6 +17,10 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
 
 ![Switching wallpaper and back](screenshots/wallpaper.gif)
 
+**Lock screen:** an Evangelion-style "signal board" with live clocks, weather, system meters, the player and your devices.
+
+![The lock screen](screenshots/lock.jpg)
+
 <details>
 <summary>More screenshots</summary>
 
@@ -29,7 +33,7 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
 | ![Launcher: emoji](screenshots/launcher-emoji.jpg) Emoji | ![Launcher: VPN locations](screenshots/launcher-vpn.jpg) VPN locations |
 | ![Settings: appearance](screenshots/settings-appearance.jpg) Settings: appearance | ![Settings: power and idle](screenshots/settings-power.jpg) Settings: power |
 | ![Wallpaper switcher](screenshots/wallpaper-switcher.jpg) Wallpaper switcher | ![Hermes / Claude side panel](screenshots/side-panel.jpg) Side panel |
-| ![Account popup](screenshots/account.jpg) Account | |
+| ![Account popup](screenshots/account.jpg) Account | ![Lock screen after the right password](screenshots/lock-granted.jpg) Lock screen: access granted |
 
 </details>
 
