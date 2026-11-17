@@ -10,11 +10,21 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    property string ssid: ""       // Wi-Fi network you're on ("" = none)
+    property string realSsid: ""
+    // Wi-Fi network you're on ("" = none); a made-up one in demo mode
+    readonly property string ssid: Settings.demo && realSsid ? "Nebula 5G" : realSsid
     property bool wired: false     // an ethernet cable is connected
     property bool wifiOn: true     // the Wi-Fi radio is switched on
     property int signal: 0         // 0..100 of the network you're on
-    property var networks: []      // [{ ssid, signal, secure, saved, active }], strongest first
+    property var realNetworks: []
+    // [{ ssid, signal, secure, saved, active }], strongest first
+    readonly property var networks: !Settings.demo ? realNetworks : [
+        { ssid: "Nebula 5G", signal: 88, secure: true, saved: true, active: true },
+        { ssid: "Nebula", signal: 74, secure: true, saved: true, active: false },
+        { ssid: "Kopi & Co. Guest", signal: 61, secure: false, saved: true, active: false },
+        { ssid: "Studio", signal: 55, secure: true, saved: false, active: false },
+        { ssid: "Orbit-2.4", signal: 38, secure: true, saved: false, active: false }
+    ]
     property var saved: []         // names of saved connections
     property bool scanning: false  // the Wi-Fi popup is open: list networks too
     readonly property bool online: ssid !== "" || wired
@@ -53,7 +63,7 @@ Singleton {
                     if (type === "wifi" && !wifi) wifi = name.join(":").replace(/\\/g, "");
                     else if (type === "ethernet") cable = true;
                 }
-                root.ssid = wifi;
+                root.realSsid = wifi;
                 root.wired = cable;
             }
         }
@@ -82,7 +92,7 @@ Singleton {
                     out.push({ ssid, signal: Number(f[1]) || 0, secure: f[2] !== "" && f[2] !== "--",
                                active: f[0] === "*", saved: root.saved.includes(ssid) });
                 }
-                root.networks = root.ranked(out);
+                root.realNetworks = root.ranked(out);
                 root.signal = out.find(n => n.active)?.signal ?? root.signal;
             }
         }
@@ -109,7 +119,7 @@ Singleton {
                 root.saved = text.split("\n").filter(l => l.endsWith(":802-11-wireless"))
                     .map(l => l.slice(0, -":802-11-wireless".length).replace(/\\:/g, ":"));
                 // The scan runs alongside this: mark saved networks again in case it finished first
-                root.networks = root.ranked(root.networks.map(n => Object.assign({}, n, { saved: root.saved.includes(n.ssid) })));
+                root.realNetworks = root.ranked(root.realNetworks.map(n => Object.assign({}, n, { saved: root.saved.includes(n.ssid) })));
             }
         }
     }

@@ -7,6 +7,35 @@ AI side panel and an Evangelion-style lock screen. Colours follow your wallpaper
 
 Built on NixOS, but nothing here needs Nix: it works on any distro that has the programs below.
 
+![The desktop: bar, clocks and weather, shortcuts, system, connections, calendar, lyrics](screenshots/desktop.jpg)
+
+| Launcher (Super+Space) | Popups |
+|---|---|
+| ![Typing in the launcher: actions, emoji, VPN locations, web search](screenshots/launcher.gif) | ![Calendar, player, quick settings, notifications and account popups](screenshots/popups.gif) |
+
+**Wallpaper switch:** the new picture is sketched in, then coloured, and the whole desktop recolours to match.
+
+![Switching wallpaper and back](screenshots/wallpaper.gif)
+
+<details>
+<summary>More screenshots</summary>
+
+| | |
+|---|---|
+| ![Calendar popup](screenshots/calendar.jpg) Calendar | ![Player popup](screenshots/music.jpg) Player |
+| ![Quick settings](screenshots/quick-settings.jpg) Quick settings | ![Notifications](screenshots/notifications.jpg) Notifications |
+| ![Notification list grouped by app](screenshots/notification-center.jpg) Notification list | ![Wi-Fi popup](screenshots/wifi.jpg) Wi-Fi |
+| ![Launcher: settings and actions](screenshots/launcher.jpg) Launcher | ![Launcher: calculator](screenshots/launcher-calc.jpg) Calculator |
+| ![Launcher: emoji](screenshots/launcher-emoji.jpg) Emoji | ![Launcher: VPN locations](screenshots/launcher-vpn.jpg) VPN locations |
+| ![Settings: appearance](screenshots/settings-appearance.jpg) Settings: appearance | ![Settings: power and idle](screenshots/settings-power.jpg) Settings: power |
+| ![Wallpaper switcher](screenshots/wallpaper-switcher.jpg) Wallpaper switcher | ![Hermes / Claude side panel](screenshots/side-panel.jpg) Side panel |
+| ![Account popup](screenshots/account.jpg) Account | |
+
+</details>
+
+The screenshots use demo mode (`qs ipc call settings set demo true`): made-up calendar, mail,
+Wi-Fi names and devices.
+
 ## What's in it
 
 | Folder | What |

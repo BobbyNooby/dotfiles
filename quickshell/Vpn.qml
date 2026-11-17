@@ -20,7 +20,14 @@ Singleton {
 
     // ---- Tailscale ----
     property string tsState: ""      // Running, Stopped, NeedsLogin, ... ("" = not installed / not running)
-    property var peers: []           // [{ name, online, direct, seen }]
+    property var realPeers: []
+    // [{ name, online, direct, seen }]; made-up devices in demo mode
+    readonly property var peers: !Settings.demo ? realPeers : [
+        { name: "atlas", online: true, direct: true, seen: "" },
+        { name: "pixel", online: true, direct: false, seen: "" },
+        { name: "homeserver", online: true, direct: true, seen: "" },
+        { name: "studio-mac", online: false, direct: false, seen: "2 h" }
+    ]
     readonly property bool tsOn: tsState === "Running"
     readonly property int peersOnline: peers.filter(p => p.online).length
     readonly property string tsStatus: tsOn ? "On · " + peersOnline + "/" + peers.length + " online"
@@ -52,13 +59,13 @@ Singleton {
                 try {
                     const j = JSON.parse(text);
                     root.tsState = j.BackendState ?? "";
-                    root.peers = Object.values(j.Peer ?? {}).map(p => ({
+                    root.realPeers = Object.values(j.Peer ?? {}).map(p => ({
                         name: (p.HostName || p.DNSName.split(".")[0]).toLowerCase(),
                         online: p.Online === true,
                         direct: (p.CurAddr ?? "") !== "",
                         seen: root.ago(p.LastSeen)
                     })).sort((a, b) => (b.online - a.online) || a.name.localeCompare(b.name));
-                } catch (e) { root.tsState = ""; root.peers = [] }
+                } catch (e) { root.tsState = ""; root.realPeers = [] }
             }
         }
     }

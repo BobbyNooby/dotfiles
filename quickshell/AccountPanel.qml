@@ -12,13 +12,14 @@ Dropdown {
     panelWidth: 300
     spacing: 10
 
-    readonly property string user: Quickshell.env("USER")
-    property string host: ""
+    readonly property string user: Settings.demo ? "alex" : Quickshell.env("USER")
+    property string realHost: ""
+    readonly property string host: Settings.demo ? "nebula" : realHost
     property string confirm: "" // "reboot" or "poweroff" after the first click
     onShownChanged: confirm = ""
     // The machine's name as configured (/etc/hostname): right after a rename, before the reboot
     // that makes it the live hostname
-    FileView { path: "/etc/hostname"; watchChanges: true; onFileChanged: reload(); printErrors: false; onLoaded: win.host = text().trim() }
+    FileView { path: "/etc/hostname"; watchChanges: true; onFileChanged: reload(); printErrors: false; onLoaded: win.realHost = text().trim() }
 
     function run(cmd) { Popups.close(); Quickshell.execDetached(["sh", "-c", cmd]) }
 

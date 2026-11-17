@@ -1,0 +1,29 @@
+#!/bin/sh
+# Made-up Google data for demo mode (Settings.demo: screenshots without your real calendar,
+# mail and addresses). Same answers as scripts/google; events are placed around today.
+d() { date -d "$1" +%Y-%m-%d; }
+t() { date -d "$1" +%Y-%m-%dT%H:%M:00%:z; }
+ev() { # ev TITLE CALENDAR COLOR START END ALLDAY [LOCATION] [MEET]
+    jq -n --arg t "$1" --arg c "$2" --arg col "$3" --arg s "$4" --arg e "$5" --argjson a "$6" --arg l "${7:-}" --arg m "${8:-}" \
+        '{ id: ($t + $s), calendar: $c, color: $col, title: $t, allDay: $a, start: $s, end: $e, location: $l, link: "https://calendar.google.com", meet: $m, accountName: "personal" }'
+}
+case "$1" in
+accounts) echo '[{"name":"personal","account":"alex@example.com","calendar":true,"gmail":true},{"name":"work","account":"alex@studio.example","calendar":true,"gmail":true}]' ;;
+unread) echo '[{"name":"personal","account":"alex@example.com","unread":3},{"name":"work","account":"alex@studio.example","unread":9}]' ;;
+events)
+    {
+        ev "Design review" Work "#7986cb" "$(t 'today 10:00')" "$(t 'today 11:00')" false "Studio, room 2" "https://meet.google.com"
+        ev "Lunch with Sam" Personal "#33b679" "$(t 'today 13:00')" "$(t 'today 14:00')" false "Kopi & Co."
+        ev "Gym" Personal "#33b679" "$(t 'today 18:30')" "$(t 'today 19:30')" false
+        ev "Sprint planning" Work "#7986cb" "$(t 'tomorrow 09:30')" "$(t 'tomorrow 10:30')" false "" "https://meet.google.com"
+        ev "Dentist" Personal "#33b679" "$(t '+2 days 15:00')" "$(t '+2 days 15:45')" false "Smile Clinic"
+        ev "Mika's birthday" Birthdays "#f6bf26" "$(d '+3 days')" "$(d '+4 days')" true
+        ev "Release day" Work "#7986cb" "$(d '+5 days')" "$(d '+6 days')" true
+        ev "Movie night" Personal "#33b679" "$(t '+6 days 20:00')" "$(t '+6 days 22:30')" false "Cinema One"
+        ev "Team offsite" Work "#7986cb" "$(d '+9 days')" "$(d '+11 days')" true "Lakeside"
+        ev "Board games" Personal "#33b679" "$(t '-2 days 19:00')" "$(t '-2 days 22:00')" false
+        ev "1:1 with Jo" Work "#7986cb" "$(t '-4 days 14:00')" "$(t '-4 days 14:30')" false
+        ev "Flight to Lisbon" Personal "#e67c73" "$(t '+13 days 07:40')" "$(t '+13 days 11:05')" false "Gate B12"
+    } | jq -s 'sort_by(.start)' ;;
+*) echo '{"error":"demo: accounts | events | unread"}'; exit 1 ;;
+esac

@@ -61,6 +61,9 @@ Singleton {
     readonly property string gpu: get("gpu") ?? ""                    // PCI address, "" = none
     readonly property string vpnPrefix: get("vpnPrefix") ?? "surfshark"
     readonly property string lockGlow: get("lockGlow") ?? "strong"
+    // Demo mode (`qs ipc call settings set demo true`): made-up calendar, mail, Wi-Fi names,
+    // Tailscale devices, user and computer name, for screenshots. Not for daily use.
+    readonly property bool demo: get("demo") ?? false
     readonly property bool saverLook: get("saverLook") ?? true         // no blur/shadows/animations in Saver mode
     readonly property string typeface: get("typeface") ?? "outfit"    // Theme.qml's pairing
     readonly property var idle: Object.assign({}, defaults.idle, data.idle ?? {})

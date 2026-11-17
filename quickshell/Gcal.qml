@@ -15,7 +15,9 @@ import Quickshell.Io
 Singleton {
     id: root
 
-    readonly property string helper: Quickshell.shellDir + "/scripts/google"
+    // demo mode: made-up accounts, events and counts (scripts/google-demo)
+    readonly property string helper: Quickshell.shellDir + (Settings.demo ? "/scripts/google-demo" : "/scripts/google")
+    onHelperChanged: { events = []; unread = []; refresh() }
 
     property var accounts: []       // [{ name, account (email), calendar, gmail }]
     property var events: []         // the helper's events + _s/_e (ms) and _key, sorted by start
