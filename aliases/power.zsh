@@ -3,6 +3,7 @@
 #   lid on|off     set explicitly
 #   lid status     show current state
 # How: holds a systemd "lid switch" inhibitor in the background (no sudo needed).
+# Also holds off the idle steps (dim, lock, screen off, sleep): hypridle respects the "idle" inhibitor.
 # note: resets on reboot or logout — re-run lid on after restarting
 # note: battery drains fast and heat builds with the lid closed — don't bag it for hours
 lid() {
@@ -17,7 +18,7 @@ lid() {
     *) echo "usage: lid [on|off|toggle|status]"; return 1 ;;
   esac
   if [[ $want == on ]] && ! $running; then
-    systemd-inhibit --what=handle-lid-switch:sleep --who=lid --why="lid closed on purpose" \
+    systemd-inhibit --what=handle-lid-switch:sleep:idle --who=lid --why="lid closed on purpose" \
       --mode=block sleep infinity >/dev/null 2>&1 &
     echo $! > "$pidfile"
     disown
@@ -35,3 +36,4 @@ lid() {
   fi
 }
 alias clamshell='lid'
+alias lit='lid' # same thing (and what dictation hears for "lid")
