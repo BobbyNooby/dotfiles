@@ -1,15 +1,15 @@
-# lid: keep the laptop awake with the lid closed (no external display needed)
+# lid: stay awake and keep working with the lid closed (for leaving agents running)
 #   lid            toggle on/off
 #   lid on|off     set explicitly
 #   lid status     show current state
-# How: holds a systemd "lid switch" inhibitor in the background (no sudo needed).
-# Also holds off the idle steps (dim, lock, screen off, sleep): hypridle respects the "idle" inhibitor.
+# While on: closing the lid does nothing, and no idle dim, lock, screen-off or sleep.
+# How: a background user service (lid-inhibit) holds a systemd inhibitor — no sudo, and it
+# outlives the terminal it was started from. hypridle respects the "idle" part.
 # note: resets on reboot or logout — re-run lid on after restarting
 # note: battery drains fast and heat builds with the lid closed — don't bag it for hours
 lid() {
-  local pidfile="${XDG_RUNTIME_DIR:-/tmp}/lid-inhibit.pid"
-  local running=false want
-  [[ -f "$pidfile" ]] && kill -0 "$(<"$pidfile")" 2>/dev/null && running=true
+  local unit=lid-inhibit running=false want
+  systemctl --user is-active --quiet $unit && running=true
   case "$1" in
     on)        want=on ;;
     off)       want=off ;;
@@ -18,22 +18,20 @@ lid() {
     *) echo "usage: lid [on|off|toggle|status]"; return 1 ;;
   esac
   if [[ $want == on ]] && ! $running; then
-    systemd-inhibit --what=handle-lid-switch:sleep:idle --who=lid --why="lid closed on purpose" \
-      --mode=block sleep infinity >/dev/null 2>&1 &
-    echo $! > "$pidfile"
-    disown
+    systemctl --user reset-failed $unit 2>/dev/null
+    systemd-run --user --quiet --unit=$unit --description="Stay awake with the lid closed" \
+      systemd-inhibit --what=handle-lid-switch:sleep:idle --who=lid --why="lid closed on purpose" \
+      --mode=block sleep infinity
     sleep 0.3
-    kill -0 "$(<"$pidfile")" 2>/dev/null && running=true || { echo "lid: couldn't take the inhibitor — state unchanged"; return 1 }
+    systemctl --user is-active --quiet $unit && running=true || { echo "lid: couldn't take the inhibitor — state unchanged"; return 1 }
   elif [[ $want == off ]] && $running; then
-    kill "$(<"$pidfile")" 2>/dev/null
-    rm -f "$pidfile"
+    systemctl --user stop $unit
     running=false
   fi
   if $running; then
-    echo "sleep DISABLED — laptop stays awake with lid closed (resets on reboot)"
+    echo "lid ON — stays awake: lid closed, idle, nothing sleeps (resets on reboot)"
   else
-    echo "sleep ENABLED — laptop sleeps normally when lid closes"
+    echo "lid OFF — sleeps normally (lid close, idle)"
   fi
 }
 alias clamshell='lid'
-alias lit='lid' # same thing (and what dictation hears for "lid")
