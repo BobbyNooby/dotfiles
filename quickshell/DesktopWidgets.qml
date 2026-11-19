@@ -379,6 +379,18 @@ PanelWindow {
                     fraction: Stats.mem
                 }
 
+                // Storage: one line per mounted drive (Storage.qml); USB drives show while plugged in
+                Repeater {
+                    model: Storage.drives
+                    Meter {
+                        required property var modelData
+                        icon: modelData.removable ? "usb" : "disk"
+                        label: modelData.name
+                        value: Storage.sizeText(modelData)
+                        fraction: modelData.fraction
+                    }
+                }
+
                 // NVIDIA: asleep (0 W) unless something is using it
                 RowLayout {
                     visible: Stats.hasGpu

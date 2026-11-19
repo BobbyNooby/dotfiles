@@ -37,7 +37,7 @@
 //   Controls.qml            `qs ipc call controls toggle` for it
 //   SettingsWindow.qml      Settings (Super+I): a page per topic, Set<Name>Page.qml each, built from
 //                           SetPage/SetCard/SetRow/SetChoice/SetButton/SetField + OverrideNote.qml
-//   data: Media (player + lyrics), Stats (CPU, memory, GPU), Weather, Net (Wi-Fi),
+//   data: Media (player + lyrics), Stats (CPU, memory, GPU), Storage (drives), Weather, Net (Wi-Fi),
 //         Vpn (Tailscale + Surfshark, the Connections card),
 //         Gcal (Google accounts, calendar events, unread mail; cached for offline)
 //   scripts/google          Google accounts for the shell and Hermes (accounts, events, unread,
