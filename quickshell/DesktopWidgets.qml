@@ -381,14 +381,29 @@ PanelWindow {
                 }
 
                 // Storage: one line per mounted drive (Storage.qml); USB drives show while plugged in
+                // One slim line each (name, bar, size) so extra drives cost little height.
                 Repeater {
                     model: Storage.drives
-                    Meter {
+                    RowLayout {
+                        id: drive
                         required property var modelData
-                        icon: modelData.removable ? "usb" : "disk"
-                        label: modelData.name
-                        value: Storage.sizeText(modelData)
-                        fraction: modelData.fraction
+                        Layout.fillWidth: true
+                        spacing: 10
+                        Icon { name: drive.modelData.removable ? "usb" : "disk"; size: 18; color: Theme.accent }
+                        Txt { text: drive.modelData.name; font.pixelSize: 14; Layout.maximumWidth: 70; elide: Text.ElideRight }
+                        Rectangle {
+                            Layout.fillWidth: true
+                            implicitHeight: 6
+                            radius: 3
+                            color: Theme.bgHighest
+                            Rectangle {
+                                height: parent.height
+                                radius: 3
+                                width: parent.width * Math.max(0, Math.min(1, drive.modelData.fraction))
+                                color: drive.modelData.fraction > 0.9 ? Theme.danger : Theme.accent
+                            }
+                        }
+                        Txt { text: Storage.sizeText(drive.modelData); font.pixelSize: 14; font.weight: Font.DemiBold }
                     }
                 }
 
@@ -599,10 +614,10 @@ PanelWindow {
                 y: 12
                 width: parent.width - 24
                 spacing: 8
-                CalMonth { id: calMonth; Layout.fillWidth: true; cellHeight: 32; titleSize: 16 }
+                CalMonth { id: calMonth; Layout.fillWidth: true; cellHeight: 26; titleSize: 16 }
                 // The event list gets whatever height is left under System and Connections
                 // (it scrolls), so the card never runs off the bottom of the screen however
-                // many drive rows System grows. 132 = this card's padding + the list's heading.
+                // many drive rows System grows. 104 = this card's padding + the list's heading.
                 CalDayList {
                     Layout.fillWidth: true
                     day: calMonth.selected
@@ -611,7 +626,7 @@ PanelWindow {
                     maxListHeight: Math.max(44, win.height - 24 - win.cardTop
                         - (sysCard.visible ? sysCard.height + 16 : 0)
                         - (connCard.visible ? connCard.height + 16 : 0)
-                        - calMonth.implicitHeight - 132)
+                        - calMonth.implicitHeight - 104)
                 }
             }
         }
