@@ -65,12 +65,16 @@ PanelWindow {
     onPathChanged: {
         if (!path) return;
         if (!frontPic.source.toString()) { frontPic.source = Theme.fileUrl(path); return }
-        if (frontPic.source.toString() === Theme.fileUrl(path)) return;
-        anim.stop();
+        anim.stop(); // (a stopped animation doesn't run onFinished, so the pictures don't swap)
+        // Back to the picture that's still in front (A → B → A, quickly): drop the one that was
+        // loading or half drawn in, or it would finish and stay while the state file says A.
+        if (frontPic.source.toString() === Theme.fileUrl(path).toString()) { backPic.source = ""; return }
         backPic.source = Theme.fileUrl(path);
     }
     function backReady() {
         if (backPic.status !== Image.Ready || !backPic.source.toString()) return;
+        // Saver mode's plain look: no transition, the loaded picture just takes over
+        if (!Pace.effects) { front = 1 - front; backPic.source = ""; return }
         fx.progress = 0;
         anim.start();
     }

@@ -12,7 +12,8 @@
 //   SmoothWheel.qml         smooth mouse-wheel / touchpad scrolling for any scrolling list
 //   Common.js               helpers several files share (battery time, Bluetooth icon, brightness, EasyEffects)
 //   Bar.qml                 the top bar
-//   DesktopWidgets.qml      clocks + weather, System, Connections, Calendar, lyrics, music controller
+//   DesktopWidgets.qml      clocks + weather, System, Connections, Calendar, music controller
+//   Lyrics.qml              the floating lyrics drum, in a small window of its own
 //   Wallpaper.qml           draws the wallpaper chosen with `setwall`
 //   Popups.qml              which dropdown is open; Dropdown.qml is the base they share:
 //     AccountPanel.qml (your picture; Avatar.qml draws it) MemoryPanel.qml (what uses the RAM) InputPanel.qml (typing language) MusicPanel.qml WifiPanel.qml BluetoothPanel.qml VolumePanel.qml BatteryPanel.qml NotificationCenter.qml
@@ -49,14 +50,21 @@ import QtQuick
 import Quickshell
 
 ShellRoot {
-    // One wallpaper, widget layer and bar per monitor
+    // One wallpaper, widget layer, lyrics window and bar per monitor
     Variants {
         model: Quickshell.screens
         Scope {
             id: perScreen
             required property var modelData
             Wallpaper { modelData: perScreen.modelData }
-            DesktopWidgets { modelData: perScreen.modelData }
+            DesktopWidgets { id: widgets; modelData: perScreen.modelData }
+            Lyrics { // placed by the widgets, so it stays between their cards
+                modelData: perScreen.modelData
+                drumTop: widgets.lyricsTop
+                drumHeight: widgets.lyricsHeight
+                leftEdge: widgets.lyricsLeft
+                rightEdge: widgets.lyricsRight
+            }
             Bar { modelData: perScreen.modelData }
         }
     }

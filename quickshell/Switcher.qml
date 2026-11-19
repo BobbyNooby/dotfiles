@@ -19,6 +19,7 @@ PanelWindow {
     property var windows: []   // [{ address, cls, title, ws }], most recent first
     property int index: 0
     property int pending: 0    // steps pressed before the window list arrived
+    property bool commitWhenLoaded: false // Alt was let go before the list arrived: switch as soon as it does
 
     exclusiveZone: 0
     WlrLayershell.layer: WlrLayer.Overlay
@@ -37,12 +38,17 @@ PanelWindow {
     }
     function commit() {
         if (!open) return;
-        const w = windows[index];
-        if (w?.hidden) Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/scripts/minimize", "restore", w.address]);
-        else if (w && index !== 0) Hyprland.dispatch("hl.dsp.focus({ window = \"address:" + w.address + "\" })");
+        // A quick Alt+Tab tap: Alt is up before hyprctl has answered. Don't close with nothing
+        // chosen; remember it, and the list's arrival does the switch (without showing the card).
+        if (windows.length === 0 && list.running) { commitWhenLoaded = true; return }
+        go(windows[index], index);
         close();
     }
-    function close() { open = false; windows = []; index = 0; idle.stop() }
+    function go(w, i) { // focus window w, number i in the list (0 = the one you're already on)
+        if (w?.hidden) Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/scripts/minimize", "restore", w.address]);
+        else if (w && i !== 0) Hyprland.dispatch("hl.dsp.focus({ window = \"address:" + w.address + "\" })");
+    }
+    function close() { open = false; windows = []; index = 0; commitWhenLoaded = false; idle.stop() }
 
     // In case the Alt release never arrives (e.g. focus was grabbed): switch after a while anyway
     Timer { id: idle; interval: 4000; onTriggered: win.commit() }
@@ -53,16 +59,20 @@ PanelWindow {
         stdout: StdioCollector {
             onStreamFinished: {
                 if (!win.open) return;
+                let found = [];
                 try {
-                    win.windows = JSON.parse(text)
+                    found = JSON.parse(text)
                         .filter(c => c.mapped && (c.workspace?.id > 0 || c.workspace?.name === "special:minimized"))
                         .map(c => ({ address: c.address, cls: c.class, title: c.title, ws: c.workspace.id,
                                      hidden: c.workspace.name === "special:minimized", order: c.focusHistoryID }))
                         // minimized windows go after the others
                         .sort((a, b) => (a.hidden - b.hidden) || (a.order - b.order));
-                } catch (e) { win.windows = [] }
-                if (win.windows.length < 2) { win.close(); return }
-                win.index = ((win.pending % win.windows.length) + win.windows.length) % win.windows.length;
+                } catch (e) { found = [] }
+                if (found.length < 2) { win.close(); return }
+                const i = ((win.pending % found.length) + found.length) % found.length;
+                if (win.commitWhenLoaded) { win.go(found[i], i); win.close(); return } // Alt already let go
+                win.windows = found;
+                win.index = i;
                 idle.restart();
             }
         }

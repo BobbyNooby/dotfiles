@@ -3,7 +3,8 @@
 //   top right:    System (CPU, memory, NVIDIA asleep/awake, battery, power profile)
 //                 and Connections (Tailscale + Surfshark switches, home devices),
 //                 Calendar (the calendar popup's month + the chosen day's Google events)
-//   bottom:       floating lyrics and a music controller you can drag anywhere (it remembers where)
+//   bottom:       a music controller you can drag anywhere (it remembers where). The floating
+//                 lyrics have their own small window (Lyrics.qml), placed from here.
 // One see-through window covers the screen; Hyprland blurs only behind the cards.
 import QtQuick
 import QtQuick.Effects
@@ -27,6 +28,17 @@ PanelWindow {
     color: "transparent"
 
     readonly property int cardTop: Theme.popupTop + 12 // first row of cards, under the bar
+
+    // ---- where the floating lyrics go (Lyrics.qml, its own window; shell.qml passes these on) ----
+    // The band they take, and how far the cards reach into that band from each side, measured
+    // from the cards themselves, so a long line stops short of them instead of drawing over
+    // them. 0 = no card beside the lyrics on that side.
+    readonly property int lyricsTop: Math.round(height * 0.70)
+    readonly property int lyricsHeight: 220
+    function reach(card) { return card.visible && card.y + card.height > lyricsTop ? card.x + card.width : 0 }
+    readonly property real lyricsLeft: Math.max(reach(weatherCard), reach(keysCard))
+    readonly property real lyricsRight: rightCol.y + rightCol.height > lyricsTop
+        && (sysCard.visible || connCard.visible || calCard.visible) ? width - rightCol.x : 0
 
     // Where the music controller was left (kept across restarts)
     FileView {
@@ -137,6 +149,13 @@ PanelWindow {
                     required property var modelData
                     required property int index
                     readonly property var w: Weather.city(modelData.id)
+                    // The hour tiles' list, replaced only when it really is another list, so
+                    // the 48 tiles are rebuilt when the forecast or the hour changes and not
+                    // whenever anything else about the city does.
+                    property var hourList: []
+                    function syncHours() { const h = w?.hours ?? []; if (h !== hourList) hourList = h }
+                    onWChanged: syncHours()
+                    Component.onCompleted: syncHours()
                     Layout.fillWidth: true
                     spacing: 8
 
@@ -194,11 +213,13 @@ PanelWindow {
                             Layout.bottomMargin: 2
                             spacing: 3
                             Txt { Layout.alignment: Qt.AlignRight; text: "H " + (city.w?.hi ?? "") + "° · L " + (city.w?.lo ?? "") + "°"; font.pixelSize: 12; color: Theme.textDim }
-                            Txt { Layout.alignment: Qt.AlignRight; text: city.w?.sunLine ?? ""; font.pixelSize: 12; color: Theme.textDim }
+                            Txt { Layout.alignment: Qt.AlignRight; text: Weather.sunLine(city.modelData.id); font.pixelSize: 12; color: Theme.textDim }
                             Txt { // saved forecast, couldn't refresh (offline)
-                                visible: !!city.w?.stale
+                                id: staleText
+                                readonly property string age: Weather.stale(city.modelData.id)
+                                visible: age !== ""
                                 Layout.alignment: Qt.AlignRight
-                                text: "offline · " + (city.w?.stale ?? "")
+                                text: "offline · " + age
                                 font.pixelSize: 11
                                 color: Theme.outline
                             }
@@ -215,18 +236,29 @@ PanelWindow {
                         flickableDirection: Flickable.HorizontalFlick
                         boundsBehavior: Flickable.StopAtBounds
                         clip: true
-                        property bool scrolled: false
-                        // Start with the hour before now at the left edge
-                        onContentWidthChanged: if (!scrolled && city.w && contentWidth > width) {
-                            contentX = Math.max(0, Math.min(contentWidth - width, (city.w.nowH - 1) * 47));
-                            scrolled = true;
+                        // Keep the hour before now at the left edge: at the start and again
+                        // each time the hour changes (or "Now" is out of view by next morning).
+                        // Not while you're scrolling it yourself: then it waits until the strip
+                        // has been left alone for a minute.
+                        readonly property int nowH: city.w && !city.w.offline ? city.w.nowH : -1
+                        property int centredOn: -1 // the hour it was last scrolled to
+                        function centre() {
+                            if (nowH < 0 || nowH === centredOn || width <= 0 || contentWidth <= width) return;
+                            if (dragging || flicking || leftAlone.running) return; // leftAlone tries again
+                            contentX = Math.max(0, Math.min(contentWidth - width, (nowH - 1) * 47));
+                            centredOn = nowH;
                         }
+                        onNowHChanged: centre()
+                        onContentWidthChanged: centre()
+                        onWidthChanged: centre()
+                        onMovementEnded: leftAlone.restart()
+                        Timer { id: leftAlone; interval: 60000; onTriggered: strip.centre() }
 
                         Row {
                             id: hours
                             spacing: 3
                             Repeater {
-                                model: city.w?.hours ?? []
+                                model: city.hourList
                                 Rectangle {
                                     id: hr
                                     required property var modelData
@@ -259,6 +291,7 @@ PanelWindow {
                             onWheel: wheel => {
                                 const d = wheel.angleDelta.y || wheel.angleDelta.x;
                                 strip.contentX = Math.max(0, Math.min(strip.contentWidth - strip.width, strip.contentX - d));
+                                leftAlone.restart();
                             }
                         }
                     }
@@ -343,6 +376,7 @@ PanelWindow {
 
     // ====================== right column ======================
     ColumnLayout {
+        id: rightCol
         x: win.width - 24 - 280
         y: win.cardTop
         width: 280
@@ -605,6 +639,7 @@ PanelWindow {
 
         // ---------- Calendar: the popup's month + day list (CalMonth, CalDayList, Gcal.qml) ----------
         Card {
+            id: calCard
             visible: Settings.show("calendar")
             Layout.fillWidth: true
             implicitHeight: calCol.implicitHeight + 26
@@ -633,54 +668,8 @@ PanelWindow {
         }
     }
 
-    // ====================== floating lyrics ======================
-    // A rolling drum: the lines sit around a cylinder lying on its side (like a revolver's
-    // cylinder seen from the side). The current line faces you; the ones before and after curve
-    // away, squashed and faded, and the drum turns one notch each time the song moves on.
-    Item {
-        id: drum
-        visible: Settings.show("lyrics") && Media.showLyrics && Media.hasLyrics && Media.hasPlayer
-        anchors.horizontalCenter: parent.horizontalCenter
-        y: win.height * 0.70
-        width: win.width - 2 * 300
-        height: 220
-        layer.enabled: true
-        layer.effect: MultiEffect { shadowEnabled: true; shadowColor: "black"; shadowOpacity: 0.6; shadowBlur: 0.8; shadowVerticalOffset: 2 }
-
-        readonly property real step: 34     // degrees between neighbouring lines
-        readonly property real radius: 88   // px: how big the drum is
-        // where the drum points, eased between lines so it rolls instead of jumping
-        property real pos: Media.lineIndex
-        Behavior on pos { NumberAnimation { duration: 340; easing.type: Easing.OutBack; easing.overshoot: 1.1 } }
-
-        Repeater {
-            model: 5 // two lines either side of the current one; the outer ones are nearly edge-on
-            Txt {
-                id: lyric
-                required property int index
-                readonly property int line: Math.round(drum.pos) - 2 + index
-                readonly property real angle: (line - drum.pos) * drum.step
-                readonly property real rad: angle * Math.PI / 180
-                readonly property bool current: line === Media.lineIndex
-                visible: Math.abs(angle) < 88 && line >= 0 && line < Media.lines.length
-                width: drum.width
-                horizontalAlignment: Text.AlignHCenter
-                elide: Text.ElideRight
-                heading: true
-                text: Media.lines[line]?.text || "· · ·"
-                font.pixelSize: 34
-                color: current ? Qt.lighter(Theme.text, 1.08) : Theme.text
-                y: drum.height / 2 + drum.radius * Math.sin(rad) - height / 2
-                opacity: Math.pow(Math.max(0, Math.cos(rad)), 2.5) * (current ? 1 : 0.55)
-                transform: Rotation {
-                    origin.x: lyric.width / 2
-                    origin.y: lyric.height / 2
-                    axis { x: 1; y: 0; z: 0 }
-                    angle: -lyric.angle
-                }
-            }
-        }
-    }
+    // The floating lyrics are in Lyrics.qml: a small window of their own, so the rolling drum
+    // doesn't redraw this whole layer. lyricsTop/lyricsLeft/lyricsRight above say where it goes.
 
     // ====================== music controller (drag it anywhere) ======================
     Rectangle {
@@ -741,7 +730,9 @@ PanelWindow {
                     implicitHeight: 3
                     radius: 2
                     color: Theme.border
-                    Rectangle { height: 3; radius: 2; width: parent.width * Media.progress; color: Theme.accent }
+                    // whole pixels: the position ticks 10 times a second with lyrics on, and a
+                    // width that changed by a fraction each time redrew the whole widget layer
+                    Rectangle { height: 3; radius: 2; width: Math.round(parent.width * Media.progress); color: Theme.accent }
                 }
             }
             RowLayout {

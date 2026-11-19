@@ -15,6 +15,9 @@ Singleton {
     readonly property bool performance: PowerProfiles.profile === PowerProfile.Performance
     property bool locked: false // set by LockScreen.qml: nobody is reading the numbers, so 3x slower again
     readonly property real factor: (saver ? 3 : performance ? 0.5 : 1) * (locked ? 3 : 1)
+    // false = skip decorative animations in the shell (lyrics roll, wallpaper transition, lock
+    // screen drift, popup slides): Saver mode with "Plain look in Saver mode" on (Settings → Power).
+    readonly property bool effects: !(saver && Settings.saverLook)
     function ms(base) { return Math.round(base * factor) }
     function slow(base) { return Math.round(base * Math.max(1, factor)) }
 }

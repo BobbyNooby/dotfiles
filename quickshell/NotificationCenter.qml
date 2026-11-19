@@ -12,6 +12,20 @@ Dropdown {
     alignRight: true
     cardRadius: 28
 
+    // Apps whose group is opened past the first three. Kept here, not in the group below:
+    // the groups are rebuilt whenever a notification arrives or goes, which closed them all.
+    property var expandedApps: []
+    function toggleExpanded(app) {
+        expandedApps = expandedApps.includes(app) ? expandedApps.filter(a => a !== app) : [...expandedApps, app];
+    }
+    Connections { // an app with nothing left starts closed next time
+        target: Notifs
+        function onGroupsChanged() {
+            const left = win.expandedApps.filter(a => Notifs.groups.some(g => g.app === a));
+            if (left.length !== win.expandedApps.length) win.expandedApps = left;
+        }
+    }
+
     RowLayout {
         Layout.fillWidth: true
         Layout.leftMargin: 4
@@ -79,7 +93,7 @@ Dropdown {
                     required property var modelData
                     readonly property string app: modelData.app
                     readonly property bool muted: Notifs.isMuted(app)
-                    property bool expanded: false
+                    readonly property bool expanded: win.expandedApps.includes(app)
                     Layout.fillWidth: true
                     spacing: 6
 
@@ -113,7 +127,7 @@ Dropdown {
                         Layout.alignment: Qt.AlignHCenter
                         implicitWidth: moreText.implicitWidth + 20
                         implicitHeight: 28
-                        onClicked: group.expanded = !group.expanded
+                        onClicked: win.toggleExpanded(group.app)
                         Txt { id: moreText; anchors.centerIn: parent; text: group.expanded ? "Show less" : "+" + (group.modelData.items.length - 3) + " more"; font.pixelSize: 12; color: Theme.accent }
                     }
                 }

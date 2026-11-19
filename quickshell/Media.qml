@@ -30,6 +30,10 @@ Singleton {
     readonly property real length: active?.length ?? 0 // seconds
     property real position: 0                          // seconds, smooth (see below)
     readonly property real progress: length > 0 ? Math.min(1, position / length) : 0
+    // `position` changes up to 10 times a second (for the lyrics). What's drawn from it should
+    // only change when it would look different: thin progress lines round their width to whole
+    // pixels (Math.round(width * Media.progress)), and time texts use this, whole seconds.
+    readonly property int positionSec: Math.floor(position)
 
     function toggle() { if (active?.canTogglePlaying) active.togglePlaying() }
     function next() { if (active?.canGoNext) active.next() }
@@ -86,10 +90,14 @@ Singleton {
     Timer { // wait for the track's details to settle (players send them in pieces)
         id: lyricDelay
         interval: 900
+        // One lookup at a time: if the song changes while one runs, this does nothing and the
+        // next one starts when it ends (onExited below). Starting over a running lookup did
+        // nothing except relabel it, so the old song's lyrics were shown for the new song.
         onTriggered: {
-            if (!root.title || !root.artist) return;
+            if (!root.title || !root.artist || lrc.running) return;
             lrc.forKey = root.trackKey;
-            lrc.command = [Quickshell.shellDir + "/scripts/lyrics", root.title, root.artist, root.album, String(Math.round(root.length))];
+            lrc.forLength = Math.round(root.length);
+            lrc.command = [Quickshell.shellDir + "/scripts/lyrics", root.title, root.artist, root.album, String(lrc.forLength)];
             lrc.running = true;
         }
     }
@@ -106,9 +114,13 @@ Singleton {
     // scripts/lyrics: LRCLIB with a cache, so songs you've played before work offline
     Process {
         id: lrc
-        property string forKey
+        property string forKey   // the song this run was started for...
+        property int forLength   // ...and the length it was asked with
         stdout: StdioCollector {
             onStreamFinished: if (lrc.forKey === root.trackKey) root.lines = root.parse(text) // the song may have changed meanwhile
         }
+        // Ended, but meanwhile the song changed (or its length arrived and nothing was found
+        // without it): look again
+        onExited: if (forKey !== root.trackKey || (root.lines.length === 0 && forLength !== Math.round(root.length))) lyricDelay.restart()
     }
 }

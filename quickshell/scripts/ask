@@ -7,7 +7,9 @@
 #       prints "@@SESSION <id>" last so the panel can carry it on.
 #   ask claude <quick|edit> <new|continue> <session-uuid> <message>
 #       Streams Claude Code's JSON events (one per line) for the panel to draw as they come.
-#       quick: read-only tools, web search/fetch and MCP servers, no edits or shell.
+#       quick: can only read files and search/fetch the web. Nothing else exists for it (no
+#              edits, shell, MCP servers or sub-agents), so text on a web page can't make it
+#              change anything.
 #       edit:  may also edit files (and search), still no shell.
 #   ask sessions <hermes|claude>
 #       Recent sessions in this folder, newest first: "<id>\t<title>\t<when>" per line.
@@ -30,11 +32,17 @@ hermes)
     mode=$2 sid=$3 msg=$4
     ask=$msg
     [ "$mode" = quick ] && ask="(Answer only: don't change any files or settings.) $msg"
+    # The panel's Stop button sends this script TERM. Bash only acts on it between commands,
+    # and Hermes would carry on by itself, so run Hermes in the background, wait for it, and
+    # pass the TERM on.
+    trap 'kill $(jobs -p) 2>/dev/null; exit 143' TERM
     if [ "$sid" != new ]; then
-        hermes --resume "$sid" -z "$ask" </dev/null 2>/dev/null | clean
+        hermes --resume "$sid" -z "$ask" </dev/null 2>/dev/null | clean &
+        wait $!
         exit 0
     fi
-    hermes -z "$ask" </dev/null 2>&1 | clean
+    hermes -z "$ask" </dev/null 2>&1 | clean &
+    wait $!
     new=$(hermes sessions list --limit 1 2>/dev/null | grep -o 'local-[0-9a-f]*' | head -1)
     if [ -n "$new" ]; then
         hermes sessions rename "$new" "$(printf '%s' "$msg" | tr '\n' ' ' | cut -c1-60)" >/dev/null 2>&1
@@ -44,7 +52,12 @@ claude)
     need claude "Claude Code" "See docs.claude.com/claude-code."
     mode=$2 session=$3 sid=$4 msg=$5
     if [ "$mode" = quick ]; then
-        perms=(--permission-mode bypassPermissions --disallowedTools Edit Write MultiEdit NotebookEdit Bash)
+        # An allow-list, not "everything but": --tools leaves only these built-in tools to
+        # call, --allowedTools lets them run unasked, and dontAsk + "--permission-prompts none"
+        # refuse whatever else turns up (MCP or plugin tools) instead of waiting for an answer
+        # nobody can give. A fetched page that says "run this" has nothing to run it with.
+        ro=Read,Glob,Grep,WebSearch,WebFetch
+        perms=(--tools "$ro" --allowedTools "$ro" --permission-mode dontAsk --permission-prompts none)
     else
         perms=(--permission-mode acceptEdits --allowedTools WebSearch WebFetch --disallowedTools Bash)
     fi

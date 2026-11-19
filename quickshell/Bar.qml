@@ -83,6 +83,7 @@ PanelWindow {
 
         // ---------- left: you, then workspaces ----------
         RowLayout {
+            id: leftGroup
             anchors { left: parent.left; leftMargin: 6; verticalCenter: parent.verticalCenter }
             spacing: 4
 
@@ -140,9 +141,14 @@ PanelWindow {
         // ---------- centre: now playing ----------
         Rectangle {
             id: music
-            visible: Media.hasPlayer
+            // 460 px in the middle, or less when a group at the side grows towards it (tray
+            // icons, the mail badge, more workspaces): it stays centred, so the room is twice
+            // the gap from the middle to the wider group (6 px margin + 12 px of air). With
+            // too little left to read a title it hides rather than sit under the buttons.
+            readonly property real room: 2 * Math.floor(body.width / 2 - Math.max(leftGroup.width, rightGroup.width) - 18)
+            visible: Media.hasPlayer && room >= 140
             anchors.centerIn: parent
-            width: 460
+            width: Math.max(0, Math.min(460, room))
             height: 32
             radius: Theme.r(12)
             color: Theme.bgMid
@@ -176,7 +182,7 @@ PanelWindow {
                         text: "<b>" + (Media.title || Media.app).replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</b>"
                             + (Media.artist ? "<font color='" + Theme.textDim + "'> · " + Media.artist.replace(/&/g, "&amp;").replace(/</g, "&lt;") + "</font>" : "")
                     }
-                    Txt { text: Media.time(Media.position); font.pixelSize: 12; color: Theme.textDim; visible: Media.length > 0 }
+                    Txt { text: Media.time(Media.positionSec); font.pixelSize: 12; color: Theme.textDim; visible: Media.length > 0 }
                 }
             }
             Clicky {
@@ -191,13 +197,14 @@ PanelWindow {
             Rectangle { // progress along the bottom edge
                 anchors { left: parent.left; bottom: parent.bottom }
                 height: 2
-                width: parent.width * Media.progress
+                width: Math.round(parent.width * Media.progress) // whole pixels: no redraw for a fraction
                 color: Theme.accent
             }
         }
 
         // ---------- right ----------
         RowLayout {
+            id: rightGroup
             anchors { right: parent.right; rightMargin: 6; verticalCenter: parent.verticalCenter }
             spacing: 2
 

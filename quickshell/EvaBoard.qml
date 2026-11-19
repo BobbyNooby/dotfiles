@@ -43,8 +43,22 @@ Item {
     readonly property color accent: st.c
     readonly property int typed: pass.text.length
 
+    // ---- awake ----
+    // The moving parts (contour drift, blinking labels, CRT flicker, the seconds) only run for
+    // 30 s after the board appears or after the last key press / mouse movement: a locked
+    // screen is mostly nobody watching, often with the display off, and these kept the whole
+    // board redrawing 60 times a second for hours. Any key or mouse movement starts them again.
+    // In Saver mode's plain look (Pace.effects false) they stay off.
+    Timer { id: awakeFor; interval: 30000; running: true }
+    readonly property bool lively: Pace.effects && awakeFor.running
+    function stir() { awakeFor.restart() }
+    onPhaseChanged: stir() // checking / denied / granted: show it moving
+    HoverHandler { onPointChanged: board.stir() } // the mouse moved (only watches: clicks and cursors are untouched)
+
     // ---- clock ----
-    SystemClock { id: clock; precision: SystemClock.Seconds }
+    // Asleep it ticks once a minute and the seconds digits go dark, so the time stays right
+    // with one redraw a minute instead of one a second.
+    SystemClock { id: clock; precision: board.lively ? SystemClock.Seconds : SystemClock.Minutes }
     function pad(n) { return (n < 10 ? "0" : "") + n }
     readonly property var days: ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"]
     readonly property var months: ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
@@ -90,6 +104,7 @@ Item {
     // nothing else to type into), and a click anywhere puts the focus back there.
     focus: true
     Keys.onPressed: e => {
+        board.stir(); // a key the passcode box didn't use (Shift, Ctrl...) still wakes the board
         if (pass.activeFocus) return;
         pass.forceActiveFocus();
         if (e.key === Qt.Key_Return || e.key === Qt.Key_Enter) board.submit(pass.text);
@@ -123,14 +138,16 @@ Item {
                     }
                 }
             }
-            NumberAnimation on x { from: 0; to: -80; duration: board.phase === "verify" ? 1000 : 6000; loops: Animation.Infinite }
+            // drifts only while awake; asleep it stays where it stopped (any position is a clean picture)
+            NumberAnimation on x { running: board.lively; from: 0; to: -80; duration: board.phase === "verify" ? 1000 : 6000; loops: Animation.Infinite }
         }
         Rectangle { y: 138; width: parent.width; height: 1; color: EvaStyle.white; opacity: 0.5 }
 
         Canvas { // 7-segment clock: HH MM SS, slanted, unlit segments faintly visible
             id: seven
             x: 26; y: 92; width: 440; height: 90 // 14 px to the left: the slant reaches past the first digit's box
-            property string digits: { const d = clock.date; return board.pad(d.getHours()) + board.pad(d.getMinutes()) + board.pad(d.getSeconds()) }
+            // asleep the seconds are "--": both digits unlit (the clock only ticks once a minute then)
+            property string digits: { const d = clock.date; return board.pad(d.getHours()) + board.pad(d.getMinutes()) + (board.lively ? board.pad(d.getSeconds()) : "--") }
             onDigitsChanged: requestPaint()
             onPaint: {
                 const ctx = getContext("2d");
@@ -144,13 +161,13 @@ Item {
                 const xs = [0, 56, 136, 192, 272, 328];
                 const on = EvaStyle.orange.toString(), off = EvaStyle.segOff.toString();
                 for (let i = 0; i < 6; i++) {
-                    const n = Number(digits[i] ?? 0);
+                    const lit = MAP[Number(digits[i])] ?? ""; // "-" lights nothing
                     ctx.save();
                     ctx.translate(xs[i] + 14, 0);
                     ctx.transform(1, 0, Math.tan(-8 * Math.PI / 180), 1, 0, 0); // skewX(-8°)
                     for (const k of "abcdefg") {
                         const p = SEG[k];
-                        ctx.fillStyle = MAP[n].includes(k) ? on : off;
+                        ctx.fillStyle = lit.includes(k) ? on : off;
                         ctx.beginPath();
                         ctx.moveTo(p[0][0], p[0][1]);
                         for (let j = 1; j < p.length; j++) ctx.lineTo(p[j][0], p[j][1]);
@@ -366,8 +383,9 @@ Item {
             EvaTag {
                 anchors.right: parent.right
                 jp: board.st.jp; text: board.st.en; tint: board.accent; size: 30
-                SequentialAnimation on opacity { running: board.st.blink; loops: Animation.Infinite; alwaysRunToEnd: true
-                    PropertyAction { value: 1 } PauseAnimation { duration: 350 } PropertyAction { value: 0.15 } PauseAnimation { duration: 350 } }
+                // dim first, bright last: when the blinking stops (it finishes its round) the label is left fully lit
+                SequentialAnimation on opacity { running: board.st.blink && board.lively; loops: Animation.Infinite; alwaysRunToEnd: true
+                    PropertyAction { value: 0.15 } PauseAnimation { duration: 350 } PropertyAction { value: 1 } PauseAnimation { duration: 350 } }
             }
             Plain {
                 anchors.right: parent.right
@@ -403,6 +421,7 @@ Item {
                     readOnly: board.phase === "verify" || board.phase === "granted"
                     clip: true
                     onAccepted: board.submit(text)
+                    onTextChanged: board.stir() // typing wakes the board
                     Keys.onEscapePressed: text = ""
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
@@ -569,8 +588,9 @@ Item {
                 EvaTag {
                     anchors.horizontalCenter: parent.horizontalCenter
                     text: "MUSIC OFFLINE"; tint: EvaStyle.red; size: 44; fill: EvaStyle.bg
-                    SequentialAnimation on opacity { loops: Animation.Infinite
-                        PropertyAction { value: 1 } PauseAnimation { duration: 350 } PropertyAction { value: 0.15 } PauseAnimation { duration: 350 } }
+                    // only while it's showing and the board is awake; it ends its round fully lit
+                    SequentialAnimation on opacity { running: !Media.hasPlayer && board.lively; loops: Animation.Infinite; alwaysRunToEnd: true
+                        PropertyAction { value: 0.15 } PauseAnimation { duration: 350 } PropertyAction { value: 1 } PauseAnimation { duration: 350 } }
                 }
                 Rectangle {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -732,7 +752,8 @@ Item {
             }
         }
         SequentialAnimation { // the flicker, on the scanlines only (the Item's opacity is the glow level)
-            running: parent.visible
+            running: parent.visible && board.lively
+            alwaysRunToEnd: true // asleep: finish the round, leaving the scanlines at full strength
             loops: Animation.Infinite
             NumberAnimation { target: crt; property: "opacity"; to: 0.94; duration: 1900 }
             NumberAnimation { target: crt; property: "opacity"; to: 0.86; duration: 80 }

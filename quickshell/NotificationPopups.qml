@@ -1,5 +1,6 @@
 // Notification popups, stacked in the top-right corner under the bar (newest on top).
 // They slide in from the right and hide after a few seconds; they stay in the list behind the bell.
+// At most Notifs.maxPopups show at once.
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
@@ -25,7 +26,10 @@ PanelWindow {
         width: 340
         spacing: 8
         Repeater {
-            model: [...Notifs.popups].reverse()
+            // ScriptModel compares the new list with the old one and only adds/removes the cards
+            // that changed. A plain array here rebuilt every card on each arrival, which slid them
+            // all in again and restarted their timers (a busy chat kept old popups up forever).
+            model: ScriptModel { values: Notifs.popups.slice(-Notifs.maxPopups).reverse() }
             NotificationCard {
                 id: pop
                 required property var modelData
@@ -34,11 +38,11 @@ PanelWindow {
                 Layout.fillWidth: true
                 onHide: Notifs.dismissPopup(modelData)
 
-                // slide in from the right
-                transform: Translate { id: slide; x: 40; Behavior on x { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } } }
+                // slide in from the right (plain look in Saver mode: it just appears)
+                transform: Translate { id: slide; x: 40; Behavior on x { enabled: Pace.effects; NumberAnimation { duration: 260; easing.type: Easing.OutCubic } } }
                 opacity: 0
                 Component.onCompleted: { slide.x = 0; opacity = 1 }
-                Behavior on opacity { NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
+                Behavior on opacity { enabled: Pace.effects; NumberAnimation { duration: 260; easing.type: Easing.OutCubic } }
 
                 RectangularShadow {
                     z: -1

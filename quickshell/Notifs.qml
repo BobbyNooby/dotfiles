@@ -9,8 +9,9 @@
 //   qs ipc call notifs mute <app>      no popups from that app (still listed); again = unmute
 //   qs ipc call notifs muted           which apps are muted
 //
-// Muted apps, Do not disturb, how long popups stay and the apps seen so far are kept in
-// ~/.local/state/quickshell/.../notifs.json, so they survive restarts (Settings window, Super+I).
+// Muted apps, Do not disturb, how long popups stay, the apps seen so far and when each
+// notification arrived are kept in ~/.local/state/quickshell/.../notifs.json, so they survive
+// restarts and reloads (Settings window, Super+I).
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -27,7 +28,8 @@ Singleton {
     onDndChanged: save()
     onPopupSecondsChanged: save()
     readonly property bool centerOpen: Popups.open === "notifs"
-    property var popups: []           // notifications currently shown as popups
+    property var popups: []           // notifications currently shown as popups (oldest first)
+    readonly property int maxPopups: 5 // more than this at once: the oldest give way (still in the list)
 
     readonly property var all: server.trackedNotifications.values
     readonly property int count: all.length
@@ -35,14 +37,15 @@ Singleton {
     property int unread: 0
     onCenterOpenChanged: unread = 0
 
-    // When each notification arrived (id → ms), for "2 min" in the list
+    // When each notification arrived (id → ms), for "2 min" in the list. Saved with the
+    // settings below: the notifications survive a reload (keepOnReload), so their times must too.
     property var times: ({})
     property int tick: 0 // bumps every minute so those times redraw
     Timer { interval: 60000; running: true; repeat: true; onTriggered: root.tick++ }
     function ago(n) {
         tick;
         const t = times[n?.id];
-        if (!t) return "now";
+        if (!t) return "earlier"; // arrived before a reload and its time wasn't saved
         const m = Math.floor((Date.now() - t) / 60000);
         return m < 1 ? "now" : m < 60 ? m + " min" : m < 1440 ? Math.floor(m / 60) + " h" : Math.floor(m / 1440) + " d";
     }
@@ -68,9 +71,19 @@ Singleton {
         for (const n of all.filter(n => (n.appName || "Other") === app)) n.dismiss();
     }
 
-    // Saved settings (muted apps, Do not disturb)
+    // Saved settings (muted apps, Do not disturb) and the arrival times
     property bool loaded: false
-    function save() { if (loaded) store.setText(JSON.stringify({ dnd, muted, popupSeconds, seen }, null, 2)) }
+    function save() {
+        if (!loaded) return;
+        // drop the times of notifications that are gone, so the map doesn't grow forever
+        const kept = {};
+        for (const n of all) if (times[n.id]) kept[n.id] = times[n.id];
+        times = kept;
+        store.setText(JSON.stringify({ dnd, muted, popupSeconds, seen, times }, null, 2));
+    }
+    // Arrivals and dismissals save a moment later, so "Clear all" or a burst of messages
+    // writes the file once, not once per notification
+    Timer { id: saveSoon; interval: 1000; onTriggered: root.save() }
     FileView {
         id: store
         path: Quickshell.statePath("notifs.json")
@@ -83,6 +96,9 @@ Singleton {
                 root.muted = Array.isArray(d.muted) ? d.muted : [];
                 root.popupSeconds = Number(d.popupSeconds) > 0 ? Number(d.popupSeconds) : 6;
                 root.seen = Array.isArray(d.seen) ? d.seen : [];
+                // keep anything that arrived before the file was read
+                const t = (d.times && typeof d.times === "object" && !Array.isArray(d.times)) ? d.times : {};
+                root.times = Object.assign({}, t, root.times);
             } catch (e) {}
             root.loaded = true;
         }
@@ -109,14 +125,30 @@ Singleton {
 
         onNotification: n => {
             n.tracked = true; // keep it in the list until dismissed
-            root.times[n.id] = Date.now();
+            // After a reload the server hands the kept notifications over again
+            // (lastGeneration): those keep the time they first arrived
+            if (!n.lastGeneration) root.times[n.id] = Date.now();
             const app = n.appName || "Other";
-            if (!root.seen.includes(app)) { root.seen = [...root.seen, app].slice(-60); root.save() }
+            if (!root.seen.includes(app)) root.seen = [...root.seen, app].slice(-60);
+            saveSoon.restart();
+            // closed by the app or dismissed
+            n.closed.connect(() => { root.dismissPopup(n); saveSoon.restart() });
+            // a kept notification handed over again after a reload: it has already popped up
+            // and been counted once, so it only goes back in the list
+            if (n.lastGeneration) return;
             if (!root.centerOpen) root.unread++;
-            n.closed.connect(() => root.dismissPopup(n)); // closed by the app or dismissed
             const quiet = root.dnd || root.isMuted(n.appName || "Other");
-            if (!quiet || n.urgency === NotificationUrgency.Critical)
-                root.popups = [...root.popups, n];
+            if (!quiet || n.urgency === NotificationUrgency.Critical) {
+                const next = [...root.popups, n];
+                // too many: the oldest ones that would time out anyway go first
+                // (critical ones stay until you close them)
+                while (next.length > root.maxPopups) {
+                    const i = next.findIndex(p => p.urgency !== NotificationUrgency.Critical);
+                    if (i < 0 || next[i] === n) break;
+                    next.splice(i, 1);
+                }
+                root.popups = next;
+            }
         }
     }
 

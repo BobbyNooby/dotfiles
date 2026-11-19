@@ -1,7 +1,7 @@
 // The side panel's chats (HermesPanel.qml): Super+A or `qs ipc call hermes toggle`.
 //
 // Two chats, like two tabs: Hermes (DeepSeek, quick answers) and Claude Code (search with
-// its web tools and MCP servers, or config changes; answers stream in, with a chip per tool
+// its web tools only: read files, search and fetch; or config changes; answers stream in, with a chip per tool
 // it used). Every chat starts as a NEW session. Type /sessions to pick an old one and carry
 // it on, /new (or the + button) to start over. Switching tabs keeps both; an answer lands in
 // the chat that asked. See EngineChat.qml for one chat, scripts/ask for the agent commands.

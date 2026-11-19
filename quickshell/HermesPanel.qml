@@ -346,14 +346,20 @@ PanelWindow {
                                 }
                             }
                         }
+                        // Send; while an answer is being written it's Stop instead (ends the
+                        // agent's process and keeps what it wrote so far, see EngineChat.stop)
                         Clicky {
                             Layout.alignment: Qt.AlignBottom
                             implicitWidth: 44
                             implicitHeight: 44
                             radius: Theme.r(14)
                             base: Hermes.busy ? Theme.bgHighest : Theme.accent
-                            onClicked: if (!Hermes.busy) { Hermes.send(input.text); input.text = "" }
-                            Icon { anchors.centerIn: parent; name: "send"; size: 18; stroke: 2; color: Hermes.busy ? Theme.textDim : Theme.textOnAccent }
+                            onClicked: {
+                                if (Hermes.busy) Hermes.chat.stop();
+                                else { Hermes.send(input.text); input.text = "" }
+                            }
+                            Icon { visible: !Hermes.busy; anchors.centerIn: parent; name: "send"; size: 18; stroke: 2; color: Theme.textOnAccent }
+                            Txt { visible: Hermes.busy; anchors.centerIn: parent; text: "Stop"; font.pixelSize: 12; font.weight: Font.DemiBold }
                         }
                     }
                 }

@@ -5,7 +5,7 @@
 //   /new        start a fresh session
 //   /sessions   list recent sessions (this folder); click one to carry it on
 //
-// message: { me, text, tools: [labels], files: [paths], undoRef, undone, streaming }
+// message: { me, text, tools: [labels], files: [paths], undoRef, undone, streaming, stopped }
 //          { note: "text" }                              a small grey line (resumed, new...)
 //          { sessions: [{ id, title, when }] }           the /sessions list
 import QtQuick
@@ -24,6 +24,8 @@ Scope {
     property string sentMode: "quick"
     property string statusBefore: ""
     property string undoRef: ""
+    property bool stopping: false             // Stop was pressed: the answer ends as "(stopped)"
+    property bool heard: false                // Claude Code sent something, so its session exists
 
     function newId() {
         return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, ch => {
@@ -39,11 +41,45 @@ Scope {
         if (text === "/sessions") { listSessions(); return }
         messages = [...messages, { me: true, text }, { me: false, text: "", tools: [], files: [], streaming: true }];
         busy = true;
+        stopping = false;
+        heard = false;
         sentMode = mode;
         asker.command = engine === "claude"
             ? [Quickshell.shellDir + "/scripts/ask", "claude", mode, fresh ? "new" : "continue", sessionId, text]
             : [Quickshell.shellDir + "/scripts/ask", "hermes", mode, fresh ? "new" : sessionId, text];
         before.running = true; // remember the repo's state first, then ask
+    }
+    // Stop the answer being written (the panel's Stop button): without this a stalled agent
+    // leaves the chat stuck on "Answering…" until its process ends, which may be never.
+    // What it wrote so far stays, marked "(stopped)".
+    function stop() {
+        if (!busy || stopping) return;
+        stopping = true;
+        if (asker.running) asker.running = false; // sends TERM; onExited below tidies up
+        else { before.running = false; finish(0) } // still at the git step: nothing was asked
+    }
+    // The answer is over (it ended by itself, or was stopped): close the last message
+    function finish(code) {
+        const who = engine === "claude" ? "Claude Code" : "Hermes";
+        const stopped = stopping;
+        patchLast(m => {
+            m.streaming = false;
+            m.text = m.text.trim();
+            if (stopped) {
+                m.stopped = true;
+                m.text += (m.text ? "\n\n" : "") + "(stopped)";
+            } else if (!m.text) m.text = code === 0 ? "(no answer)"
+                : "⚠ " + who + " stopped with an error (exit " + code + "). "
+                  + (Net.online ? "Try again, or run `" + (engine === "claude" ? "claude" : "hermes doctor") + "` in a terminal to see why."
+                                : "You're offline: it needs the internet.");
+            return m;
+        });
+        // Stopped before Claude Code said anything: its session may not exist yet, so
+        // --resume would fail. Start the next message as a new session under a new id.
+        if (engine === "claude" && stopped && fresh && !heard) sessionId = newId();
+        else if (engine === "claude" || sessionId) fresh = false;
+        stopping = false;
+        busy = false;
     }
     function reset() {
         if (busy) return;
@@ -101,7 +137,7 @@ Scope {
                 const [status, refs] = text.split("@@\n");
                 c.statusBefore = status;
                 c.undoRef = (refs ?? "").trim().split("\n")[0] ?? "";
-                asker.running = true;
+                if (c.busy && !c.stopping) asker.running = true; // not if Stop came first
             }
         }
     }
@@ -119,6 +155,7 @@ Scope {
                 }
                 let e;
                 try { e = JSON.parse(line) } catch (err) { return }
+                c.heard = true;
                 if (e.type === "stream_event") {
                     const ev = e.event;
                     if (ev?.type === "content_block_delta" && ev.delta?.type === "text_delta")
@@ -146,18 +183,8 @@ Scope {
             }
         }
         onExited: (code, status) => {
-            const who = c.engine === "claude" ? "Claude Code" : "Hermes";
-            c.patchLast(m => {
-                m.streaming = false;
-                m.text = m.text.trim();
-                if (!m.text) m.text = code === 0 ? "(no answer)"
-                    : "⚠ " + who + " stopped with an error (exit " + code + "). "
-                      + (Net.online ? "Try again, or run `" + (c.engine === "claude" ? "claude" : "hermes doctor") + "` in a terminal to see why."
-                                    : "You're offline: it needs the internet.");
-                return m;
-            });
-            if (c.engine === "claude" || c.sessionId) c.fresh = false;
-            c.busy = false;
+            c.finish(code);
+            // also after Stop: it may have changed files before it was stopped
             if (c.sentMode === "edit") after.running = true;
         }
     }
