@@ -118,7 +118,9 @@ PanelWindow {
 
     // ---------------- sources ----------------
     // Shortcut entries made for rofi (rofi script menus): the launcher has its own (live) versions
-    readonly property var hiddenApps: ["wifi-menu", "bluetooth-menu", "settings-menu", "setwall", "lock-screen", "power-menu"]
+    readonly property var hiddenApps: ["wifi-menu", "bluetooth-menu", "settings-menu", "setwall", "lock-screen", "power-menu",
+        // set-up helpers nobody opens by name: they only got in the way of real matches
+        "rofi-theme-selector", "org.fcitx.fcitx5-migrator", "kbd-layout-viewer5", "uuctl", "blueman-adapters"]
     // Apps (and their extra actions, like "New private window") from the .desktop files
     readonly property var apps: {
         const out = [], seen = {};
@@ -478,7 +480,9 @@ PanelWindow {
                 // the answer to a sum goes first
                 const mathy = Lib.looksMathy(q);
                 if (mathy && hasQalc && qalcFor !== q) { qalcFor = q; qalcAnswer = ""; qalcDelay.restart() }
-                const js = Lib.calc(q);
+                // only with an operator or a maths word in it: "2e" and "5 pi" on their own are more
+                // likely the start of a name than a sum
+                const js = (mathy || /[-+*/^%()!×÷]/.test(q)) ? Lib.calc(q) : null;
                 const answer = (mathy && hasQalc && qalcAnswer && qalcFor === q) ? qalcAnswer : js !== null ? Lib.formatNumber(js) : "";
                 if (answer && answer !== q)
                     add("Calculator", [{ key: "", title: answer, big: true, icon: "calc", sub: q + " =",

@@ -10,9 +10,16 @@ function fuzzy(q, s, loose) {
     if (!q || !s) return 0;
     s = String(s).toLowerCase();
     if (s === q) return 100;
-    if (s.startsWith(q)) return 90 - Math.min(s.length - q.length, 30) * 0.2;
+    // a whole first word ("obs" → "OBS Studio") beats a longer word that starts the same ("Obsidian")
+    if (s.startsWith(q)) return (/[\s\-_.:/(]/.test(s[q.length]) ? 91 : 90) - Math.min(s.length - q.length, 30) * 0.2;
     const i = s.indexOf(q);
     if (i > 0) return /[\s\-_.:/(]/.test(s[i - 1]) ? 78 : 62;
+    // punctuation and spaces don't count: "wifi" → "Wi-Fi", "localsend" → "Local Send"
+    const sq = s.replace(/[\s\-_.]/g, ""), qq = q.replace(/[\s\-_.]/g, "");
+    if (qq.length > 1 && sq !== s) {
+        if (sq === qq) return 97;
+        if (sq.startsWith(qq)) return 86 - Math.min(sq.length - qq.length, 30) * 0.2;
+    }
     if (!loose || q.length < 2) return 0;
     // letters in order: "vsc" → "Visual Studio Code"; word starts count extra, gaps count against
     let from = 0, starts = 0, gaps = 0;
@@ -24,7 +31,10 @@ function fuzzy(q, s, loose) {
         gaps += k - from;
         from = k + 1;
     }
-    return Math.max(5, Math.min(50, 25 + starts * 8 - gaps * 1.5));
+    // Only a tidy match counts: mostly word starts ("vsc"), or letters close together. Before,
+    // any name with the letters somewhere in order matched ("term" → "Fcitx 5 Wayland Launcher").
+    const v = 25 + starts * 8 - gaps * 1.5;
+    return v >= 22 ? Math.min(50, v) : 0;
 }
 
 // Best score of an item: `fields` is [[text, weight, loose], ...]. Several words ("wifi off")
@@ -140,5 +150,8 @@ function looksMathy(q) {
 
 // A web address typed in full or as "example.com/page"
 function looksLikeUrl(q) {
-    return !/\s/.test(q) && (/^https?:\/\/\S+$/i.test(q) || /^(localhost|[\w-]+(\.[\w-]+)*\.[a-z]{2,})(:\d+)?(\/\S*)?$/i.test(q));
+    if (/\s/.test(q)) return false;
+    if (/^https?:\/\/\S+$/i.test(q) || /^localhost(:\d+)?(\/\S*)?$/i.test(q)) return true;
+    // a bare name needs a real web ending: "readme.md" and "notes.txt" are file names, not sites
+    return /^[\w-]+(\.[\w-]+)*\.(com|org|net|io|dev|app|ai|co|uk|my|me|gov|edu|sh|so|gg|tv|fm|xyz|tech|cloud|info|jp|de|fr|us|ca|au|sg)(:\d+)?(\/\S*)?$/i.test(q);
 }
