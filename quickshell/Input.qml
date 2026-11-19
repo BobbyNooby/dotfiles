@@ -74,7 +74,7 @@ Singleton {
     // switches show at once: set() updates `current` itself)
     Process {
         id: poll
-        // (through sh, so a missing fcitx5 before the rebuild is quiet instead of a warning every 2 s)
+        // (through sh, so a missing fcitx5 before the rebuild is quiet instead of a warning every 5 s)
         command: ["sh", "-c", "command -v fcitx5-remote >/dev/null && fcitx5-remote -n"]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -84,5 +84,5 @@ Singleton {
             }
         }
     }
-    Timer { interval: 5000; running: true; repeat: true; triggeredOnStart: true; onTriggered: poll.running = true }
+    Timer { interval: Pace.ms(5000); running: root.methods.length !== 1; repeat: true; triggeredOnStart: true; onTriggered: poll.running = true }
 }

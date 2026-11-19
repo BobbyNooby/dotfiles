@@ -1,7 +1,7 @@
 // Tailscale and Surfshark for the Connections card on the desktop (called Vpn: "Connections"
 // is taken by QtQuick).
 //
-// Tailscale: `tailscale status --json` every 10 s. The switch runs `tailscale up` / `down`;
+// Tailscale: `tailscale status --json` every 60 s. The switch runs `tailscale up` / `down`;
 // that works without a password because the system makes you Tailscale's operator
 // (services.tailscale.extraSetFlags in modules/common.nix). Not logged in yet: the switch
 // starts `tailscale login` and opens the sign-in page in the browser.
@@ -178,6 +178,6 @@ Singleton {
     // NetworkManager events (Net.qml) cover VPN and Tailscale going up or down; the slow timer
     // is for what isn't an event (Tailscale peers coming online)
     Connections { target: Net; function onChanged() { root.refresh() } }
-    Timer { interval: 60000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
+    Timer { interval: Pace.ms(60000); running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
     Timer { id: settle; interval: 2500; onTriggered: root.refresh() }
 }

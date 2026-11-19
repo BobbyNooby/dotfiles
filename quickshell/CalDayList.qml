@@ -11,6 +11,7 @@ ColumnLayout {
     property date day: new Date()
     property int maxListHeight: 260
     property int upcomingCount: 10
+    property bool spin: true // the sync icon turns while fetching; off on the desktop (it redraws the whole layer)
     spacing: 10
 
     readonly property bool isToday: { Gcal.tick; return Gcal.dayKey(day) === Gcal.dayKey(new Date()) }
@@ -188,7 +189,7 @@ ColumnLayout {
                 id: syncIcon
                 anchors.centerIn: parent
                 name: "sync"; size: 15; color: Theme.textDim
-                RotationAnimation on rotation { running: Gcal.busy; from: 0; to: 360; duration: 1000; loops: Animation.Infinite; onRunningChanged: if (!running) syncIcon.rotation = 0 }
+                RotationAnimation on rotation { running: Gcal.busy && list.spin; from: 0; to: 360; duration: 1000; loops: Animation.Infinite; onRunningChanged: if (!running) syncIcon.rotation = 0 }
             }
         }
     }

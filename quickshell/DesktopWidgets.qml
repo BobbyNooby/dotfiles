@@ -622,6 +622,7 @@ PanelWindow {
                     Layout.fillWidth: true
                     day: calMonth.selected
                     upcomingCount: 10
+                    spin: false
                     spacing: 8
                     maxListHeight: Math.max(44, win.height - 24 - win.cardTop
                         - (sysCard.visible ? sysCard.height + 16 : 0)

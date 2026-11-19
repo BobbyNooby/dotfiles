@@ -190,12 +190,12 @@ Singleton {
                             saved.setText(JSON.stringify(j));
                         } catch (e) { // offline or Open-Meteo down: try again in a minute
                             if (!root.data[fetcher.modelData.id]) { const f = Object.assign({}, root.failed); f[fetcher.modelData.id] = true; root.failed = f }
-                            retry.start();
+                            if (Net.online) retry.start(); // offline: the "network back" hook below refetches
                         }
                     }
                 }
             }
-            Timer { interval: 900000; running: true; repeat: true; triggeredOnStart: true; onTriggered: curl.running = true }
+            Timer { interval: Pace.slow(900000); running: true; repeat: true; triggeredOnStart: true; onTriggered: curl.running = true }
             Timer { id: retry; interval: 60000; onTriggered: curl.running = true }
             Connections { // network back: fetch now instead of waiting
                 target: Net

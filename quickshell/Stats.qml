@@ -1,4 +1,4 @@
-// System numbers for the bar and the System card, read every 2 seconds:
+// System numbers for the bar and the System card, read every 3 seconds (Pace.qml scales it):
 // CPU load (/proc/stat), CPU temperature (the k10temp sensor), memory (/proc/meminfo),
 // uptime (/proc/uptime) and whether the NVIDIA card is asleep. The card's power-state file
 // is safe to read while it sleeps; nvidia-smi would wake it up, so it's never used here.
@@ -30,7 +30,7 @@ Singleton {
     property string tempPath: "" // found once: hwmon numbers change between boots
 
     Timer {
-        interval: 3000
+        interval: Pace.ms(3000) // Saver 9 s, Performance 1.5 s (Pace.qml)
         running: true
         repeat: true
         triggeredOnStart: true

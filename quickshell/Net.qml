@@ -125,7 +125,7 @@ Singleton {
     }
 
     onScanningChanged: if (scanning) { cachedFirst = true; refresh() }
-    Timer { interval: root.scanning ? 4000 : 30000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
+    Timer { interval: root.scanning ? 4000 : Pace.ms(30000); running: true; repeat: true; triggeredOnStart: true; onTriggered: root.refresh() }
 
     // NetworkManager's own event stream. `changed` also tells Vpn.qml to look again.
     signal changed()

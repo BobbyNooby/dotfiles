@@ -55,8 +55,8 @@ Singleton {
     // (only while lyrics or the player popup need it: otherwise the once-a-second ask is enough,
     // and the bar doesn't redraw 10 times a second for a 2 px progress line)
     Timer {
-        interval: 100
-        running: root.playing && (root.hasLyrics || Popups.open === "music")
+        interval: Pace.slow(100) // Saver: 3 times a second is enough for lyrics
+        running: root.playing && ((root.hasLyrics && root.showLyrics && Settings.show("lyrics")) || Popups.open === "music")
         repeat: true
         onTriggered: {
             const p = root.readPos + (Date.now() - root.readAt) / 1000 * (root.active?.rate || 1);

@@ -33,7 +33,7 @@ Scope {
     readonly property bool plain: Settings.saverLook && PowerProfiles.profile === PowerProfile.PowerSaver
     function look() { Quickshell.execDetached([Quickshell.env("HOME") + "/.config/hypr/scripts/saver-look", plain ? "on" : "off"]) }
     onPlainChanged: look()
-    Component.onCompleted: if (plain) look()
+    Component.onCompleted: look() // also "off": the shell may have been down when Saver ended
     Connections {
         target: Hyprland
         function onRawEvent(event) { if (event.name === "configreloaded" && root.plain) root.look() }

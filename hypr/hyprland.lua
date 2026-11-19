@@ -112,7 +112,7 @@ pcall(require, "colors")
 -- transparent parts (the gap above the bar, rounded corners).
 hl.layer_rule({
     name         = "blur-shell",
-    match        = { namespace = "^(qs-bar|qs-widgets|qs-notifications|qs-popup|qs-hermes|qs-switcher|qs-cheatsheet|qs-launcher|qs-control-center|rofi)$" },
+    match        = { namespace = "^(qs-bar|qs-widgets|qs-notifications|qs-popup|qs-hermes|qs-switcher|qs-cheatsheet|qs-launcher|rofi)$" },
     blur         = true,
     ignore_alpha = 0.2,
 })

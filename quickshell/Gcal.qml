@@ -1,5 +1,5 @@
 // Google: your accounts, calendar events and unread mail, from scripts/google (Hermes' sign-in).
-// Events: last month + 60 days ahead, every 10 min; unread every 3 min; both at once on
+// Events: last month + 60 days ahead, every 10 min (unread with them); both at once on
 // refresh(), when the network comes back, and when a popup opens with old data.
 // Saved to ~/.cache/quickshell/by-shell/…/gcal.json and shown straight away on start, so the
 // calendar works offline ("offline · as of 14:05"). The helper takes 1–3 s per account.
@@ -125,9 +125,8 @@ Singleton {
         }
     }
 
-    Timer { interval: 600000; running: true; repeat: true; triggeredOnStart: true; onTriggered: root.runAccounts(true) }
-    Timer { interval: 600000; running: root.connected; repeat: true; onTriggered: root.fetchUnread() }
-    Timer { id: retry; interval: 60000; running: root.stale && Net.online; onTriggered: root.refresh() }
+    Timer { interval: Pace.slow(600000); running: true; repeat: true; triggeredOnStart: true; onTriggered: root.runAccounts(true) }
+    Timer { id: retry; interval: 60000; repeat: true; running: root.stale && Net.online; onTriggered: root.refresh() }
     SystemClock { precision: SystemClock.Minutes; onDateChanged: root.tick++ }
     Connections { // network back: fetch now instead of waiting
         target: Net

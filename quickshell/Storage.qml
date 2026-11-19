@@ -1,5 +1,5 @@
 // Mounted drives for the System card: one entry per real disk or partition (the internal
-// disk, plus USB sticks and external drives while they're mounted). Read with df once a minute.
+// disk, plus USB sticks and external drives while they're mounted). Read with df once a minute (Pace.qml scales it).
 pragma Singleton
 import QtQuick
 import Quickshell
@@ -49,5 +49,5 @@ Singleton {
                   "-x", "tmpfs", "-x", "devtmpfs", "-x", "efivarfs", "-x", "overlay", "-x", "squashfs"]
         stdout: StdioCollector { onStreamFinished: root.parse(text) }
     }
-    Timer { interval: 60000; running: true; repeat: true; triggeredOnStart: true; onTriggered: df.running = true }
+    Timer { interval: Pace.ms(60000); running: true; repeat: true; triggeredOnStart: true; onTriggered: df.running = true }
 }

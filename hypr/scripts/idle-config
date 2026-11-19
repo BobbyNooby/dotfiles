@@ -17,10 +17,12 @@ out="$HOME/.config/hypr/hypridle.conf"
 scripts="$HOME/.config/hypr/scripts"
 
 # settings.json's idle, then overrides.json's on top (either file may be missing)
-idle=$(jq -n '
-  ([inputs] | map(.idle // {}) | add // {}) as $i
+# (cat, not file arguments: jq fails outright when one of its files is missing, which threw
+# away settings.json's values whenever overrides.json didn't exist)
+idle=$(cat "$dir/settings.json" "$dir/overrides.json" 2>/dev/null | jq -s '
+  (map(.idle // {}) | add // {}) as $i
   | { dim: 150, lock: 300, screenOff: 330, suspend: 1800, suspendPluggedIn: true, lockOnSleep: true } + $i
-' "$dir/settings.json" "$dir/overrides.json" 2>/dev/null) \
+' 2>/dev/null) \
   || idle='{"dim":150,"lock":300,"screenOff":330,"suspend":1800,"suspendPluggedIn":true,"lockOnSleep":true}'
 get() { echo "$idle" | jq -r ".$1"; }
 

@@ -70,12 +70,22 @@ Scope {
     Timer { id: backToIdle; interval: 2200; onTriggered: if (root.phase === "denied") { root.phase = "idle"; root.message = "" } }
 
     // Caps Lock: read the keyboard's light (Qt can't tell a locked screen)
+    // The light's file is looked up once per lock (its number changes between boots); after
+    // that it's a plain file read, not a shell pipeline started 2.5 times a second.
+    property string capsPath: ""
     Process {
-        id: capsRead
-        command: ["sh", "-c", "cat /sys/class/leds/*::capslock/brightness 2>/dev/null | sort -rn | head -1"]
-        stdout: StdioCollector { onStreamFinished: root.caps = text.trim() !== "" && text.trim() !== "0" }
+        id: capsFind
+        command: ["sh", "-c", "ls /sys/class/leds/*::capslock/brightness 2>/dev/null | head -1"]
+        stdout: StdioCollector { onStreamFinished: root.capsPath = text.trim() }
     }
-    Timer { interval: 400; repeat: true; running: session.locked; onTriggered: capsRead.running = true }
+    FileView {
+        id: capsFile
+        path: root.capsPath
+        printErrors: false
+        onLoaded: root.caps = text().trim() !== "" && text().trim() !== "0"
+    }
+    Connections { target: session; function onLockedChanged() { Pace.locked = session.locked; if (session.locked) capsFind.running = true } }
+    Timer { interval: 400; repeat: true; running: session.locked && root.capsPath !== ""; onTriggered: capsFile.reload() }
 
     WlSessionLock {
         id: session
