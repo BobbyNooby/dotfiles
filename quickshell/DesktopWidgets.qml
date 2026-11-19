@@ -350,6 +350,7 @@ PanelWindow {
 
         // ---------- System ----------
         Card {
+            id: sysCard
             visible: Settings.show("system")
             Layout.fillWidth: true
             implicitHeight: sys.implicitHeight + 30
@@ -467,6 +468,7 @@ PanelWindow {
 
         // ---------- Connections ----------
         Card {
+            id: connCard
             visible: Settings.show("connections")
             Layout.fillWidth: true
             implicitHeight: conn.implicitHeight + 28
@@ -598,7 +600,19 @@ PanelWindow {
                 width: parent.width - 24
                 spacing: 8
                 CalMonth { id: calMonth; Layout.fillWidth: true; cellHeight: 32; titleSize: 16 }
-                CalDayList { Layout.fillWidth: true; day: calMonth.selected; maxListHeight: 150; upcomingCount: 10; spacing: 8 }
+                // The event list gets whatever height is left under System and Connections
+                // (it scrolls), so the card never runs off the bottom of the screen however
+                // many drive rows System grows. 132 = this card's padding + the list's heading.
+                CalDayList {
+                    Layout.fillWidth: true
+                    day: calMonth.selected
+                    upcomingCount: 10
+                    spacing: 8
+                    maxListHeight: Math.max(44, win.height - 24 - win.cardTop
+                        - (sysCard.visible ? sysCard.height + 16 : 0)
+                        - (connCard.visible ? connCard.height + 16 : 0)
+                        - calMonth.implicitHeight - 132)
+                }
             }
         }
     }

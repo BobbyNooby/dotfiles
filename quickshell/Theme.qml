@@ -28,7 +28,13 @@ Singleton {
     readonly property color accentSoft:  c.primary_container          // "on" tiles, chosen network
     readonly property color textOnSoft: c.on_primary_container
     readonly property color second:      c.tertiary
-    readonly property color danger:      c.error                      // low battery, DND slash
+    // low battery, DND slash, full meters. With a red or pink wallpaper matugen's error colour
+    // is the same as the accent, so a warning would look like "normal": then use a fixed red.
+    readonly property color danger: {
+        const e = Qt.color(c.error), a = Qt.color(c.primary);
+        const far = Math.abs(e.r - a.r) + Math.abs(e.g - a.g) + Math.abs(e.b - a.b) > 0.25;
+        return far ? e : "#ff5a4f";
+    }
 
     // Weather icons keep their own colours whatever the wallpaper
     readonly property color sun:  "#f2c879"

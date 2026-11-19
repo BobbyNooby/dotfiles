@@ -341,19 +341,33 @@ PanelWindow {
                         color: "transparent"
                         border.color: Theme.textDim
                         border.width: 1.5
-                        Rectangle {
-                            x: 1.5; y: 1.5
-                            height: parent.height - 3
-                            width: (parent.width - 3) * bar.battPct
-                            radius: 4
-                            color: bar.battPct <= 0.2 && !bar.charging ? Theme.danger : Theme.accent
-                        }
+                        // The number is drawn twice: light on the empty part, dark on the filled
+                        // part (clipped to the fill), so it reads at every level. One colour
+                        // switched at 55% left half the digits unreadable in the middle range.
                         Txt {
                             anchors.centerIn: parent
                             text: Math.round(bar.battPct * 100)
                             font.pixelSize: 11
                             font.weight: Font.Bold
-                            color: bar.battPct >= 0.55 ? Theme.textOnAccent : Theme.text
+                            color: Theme.text
+                        }
+                        Rectangle {
+                            id: battFill
+                            x: 1.5; y: 1.5
+                            height: parent.height - 3
+                            width: (parent.width - 3) * bar.battPct
+                            radius: 4
+                            clip: true
+                            color: bar.battPct <= 0.2 && !bar.charging ? Theme.danger : Theme.accent
+                            Txt {
+                                // same spot as the light copy, in the fill's own coordinates
+                                x: (40 - width) / 2 - battFill.x
+                                y: (20 - height) / 2 - battFill.y
+                                text: Math.round(bar.battPct * 100)
+                                font.pixelSize: 11
+                                font.weight: Font.Bold
+                                color: Theme.textOnAccent
+                            }
                         }
                     }
                     Rectangle { implicitWidth: 3; implicitHeight: 8; radius: 1; color: Theme.textDim }
