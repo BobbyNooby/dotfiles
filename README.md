@@ -21,6 +21,11 @@ Built on NixOS, but nothing here needs Nix: it works on any distro that has the 
 
 ![The lock screen](screenshots/lock.jpg)
 
+The boot menu in the same style: a GRUB theme, with the older system versions one level down.
+
+| ![Boot menu](screenshots/boot-menu.jpg) | ![Boot menu: older versions](screenshots/boot-menu-versions.jpg) |
+|---|---|
+
 <details>
 <summary>More screenshots</summary>
 
